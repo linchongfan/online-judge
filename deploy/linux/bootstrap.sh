@@ -49,9 +49,20 @@ esac
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
+
+# docker.io conflicts with the Docker CE stack (containerd.io). When the
+# Docker CE packages are already present, skip docker.io and only ensure the
+# docker CLI / compose plugin requirements are met.
+DOCKER_PKGS=(docker.io docker-compose-v2)
+if dpkg -l containerd.io >/dev/null 2>&1 || dpkg -l docker-ce >/dev/null 2>&1; then
+    DOCKER_PKGS=()
+    echo "Docker CE packages detected; skipping docker.io to avoid containerd conflict."
+fi
+
 apt-get install -y \
-    ca-certificates certbot curl default-mysql-client docker.io docker-compose-v2 git gzip nginx nodejs npm openssl \
-    "$PYTHON_PKG" "$PYTHON_VENV_PKG" redis-tools rsync tar util-linux
+    ca-certificates certbot curl default-mysql-client git gzip nginx nodejs npm openssl \
+    "$PYTHON_PKG" "$PYTHON_VENV_PKG" redis-tools rsync tar util-linux \
+    ${DOCKER_PKGS[@]+"${DOCKER_PKGS[@]}"}
 
 if ! command -v bun >/dev/null 2>&1 || [[ $(bun --version) != 1.4.2 ]]; then
     npm install -g bun@1.4.2
