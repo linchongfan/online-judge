@@ -1,0 +1,13 @@
+[Unit]
+Description=Xinbaoyan Linux judge watchdog
+After=xinbaoyan-judge-worker.service xinbaoyan-api.service
+Wants=xinbaoyan-judge-worker.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart=/opt/xinbaoyan-judge-watchdog.sh
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

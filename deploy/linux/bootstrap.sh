@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+if [[ ${EUID} -ne 0 ]]; then
+    echo "Run as root: sudo LETSENCRYPT_EMAIL=admin@example.com bash deploy/linux/bootstrap.sh oj.example.com" >&2
+    exit 1
+fi
+if [[ $# -ne 1 ]] || [[ ! $1 =~ ^[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]; then
+    echo "Usage: $0 <public-domain>" >&2
+    exit 1
+fi
+: "${LETSENCRYPT_EMAIL:?Set LETSENCRYPT_EMAIL for certificate registration}"
+
+DOMAIN=$1
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+BASE_DIR=/opt/xinbaoyan
+INFRA_DIR="$BASE_DIR/infra"
+
+source /etc/os-release
+if [[ ${ID:-} != ubuntu || ${VERSION_ID:-} != 24.04 ]]; then
+    echo "This bootstrap supports Ubuntu 24.04 LTS only." >&2
+    exit 1
+fi
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y \
+    ca-certificates certbot curl default-mysql-client docker.io docker-compose-v2 git gzip nginx nodejs npm openssl \
+    python3.12 python3.12-venv redis-tools rsync tar util-linux
+
+if ! command -v bun >/dev/null 2>&1 || [[ $(bun --version) != 1.4.2 ]]; then
+    npm install -g bun@1.4.2
+fi
+
+systemctl enable --now docker
+
+if ! id xinbaoyan >/dev/null 2>&1; then
+    useradd --system --home-dir "$BASE_DIR" --shell /usr/sbin/nologin xinbaoyan
+fi
+install -d -m 755 -o root -g root "$BASE_DIR" "$BASE_DIR/releases" "$INFRA_DIR"
+install -d -m 750 -o xinbaoyan -g xinbaoyan /var/lib/xinbaoyan /var/lib/xinbaoyan/data
+install -d -m 700 -o root -g root /var/backups/xinbaoyan
+
+bash "$SCRIPT_DIR/configure.sh" "$DOMAIN"
+
+install -m 644 -o root -g root "$SCRIPT_DIR/docker-compose.yml" "$INFRA_DIR/docker-compose.yml"
+install -m 700 -o root -g root "$SCRIPT_DIR/backup.sh" "$INFRA_DIR/backup.sh"
+for unit in xinbaoyan-api.service xinbaoyan-consumer.service xinbaoyan-maintenance.service \
+            xinbaoyan-backup.service xinbaoyan-backup.timer; do
+    install -m 644 -o root -g root "$SCRIPT_DIR/$unit" "/etc/systemd/system/$unit"
+done
+install -d -m 755 -o root -g root /etc/letsencrypt/renewal-hooks/deploy /var/www/certbot
+install -m 700 -o root -g root "$SCRIPT_DIR/renewal-hook.sh" /etc/letsencrypt/renewal-hooks/deploy/xinbaoyan-nginx.sh
+
+if [[ ! -s /etc/letsencrypt/live/$DOMAIN/fullchain.pem ]]; then
+    sed "s/__DOMAIN__/$DOMAIN/g" "$SCRIPT_DIR/nginx-acme.conf" > /etc/nginx/sites-available/xinbaoyan-acme.conf
+    ln -sfn /etc/nginx/sites-available/xinbaoyan-acme.conf /etc/nginx/sites-enabled/xinbaoyan-acme.conf
+    nginx -t
+    systemctl enable --now nginx
+    systemctl restart nginx
+    certbot certonly --webroot --webroot-path /var/www/certbot \
+        --domain "$DOMAIN" --email "$LETSENCRYPT_EMAIL" \
+        --agree-tos --non-interactive --keep-until-expiring
+    unlink /etc/nginx/sites-enabled/xinbaoyan-acme.conf
+fi
+
+sed "s/__DOMAIN__/$DOMAIN/g" "$SCRIPT_DIR/nginx.conf" > /etc/nginx/sites-available/xinbaoyan.conf
+ln -sfn /etc/nginx/sites-available/xinbaoyan.conf /etc/nginx/sites-enabled/xinbaoyan.conf
+nginx -t
+systemctl enable --now nginx
+systemctl restart nginx
+systemctl daemon-reload
+systemctl enable --now certbot.timer
+
+cat <<EOF
+Bootstrap complete.
+1. Edit /etc/xinbaoyan/app.env and replace all CHANGE_ME_SMTP* placeholders.
+2. Run: sudo bash $SCRIPT_DIR/deploy.sh
+3. For same-host judging, follow deploy/judge-linux/ before enabling the judge worker.
+EOF

@@ -1,0 +1,28 @@
+[Unit]
+Description=Xinbaoyan Linux judge worker (isolate sandbox)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=xinbaoyan-judge
+Group=xinbaoyan-judge
+WorkingDirectory=/opt/xinbaoyan/current
+EnvironmentFile=/etc/xinbaoyan-judge/judge.env
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/xinbaoyan/current/.venv/bin/python scripts/run_judge_worker.py
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+PrivateTmp=true
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=false
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+NoNewPrivileges=false
+CapabilityBoundingSet=SETUID SETGID SYS_ADMIN SYS_CHROOT SYS_RESOURCE
+
+[Install]
+WantedBy=multi-user.target

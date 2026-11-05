@@ -1,0 +1,11 @@
+[Unit]
+Description=Schedule Xinbaoyan backups
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+Persistent=true
+RandomizedDelaySec=10m
+Unit=xinbaoyan-backup.service
+
+[Install]
+WantedBy=timers.target

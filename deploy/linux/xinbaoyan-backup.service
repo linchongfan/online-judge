@@ -1,0 +1,17 @@
+[Unit]
+Description=Back up Xinbaoyan MySQL and persistent test data
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+EnvironmentFile=/etc/xinbaoyan/infra.env
+ExecStart=/opt/xinbaoyan/infra/backup.sh
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true

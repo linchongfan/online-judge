@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Xinbaoyan Linux judge watchdog periodically
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1min
+RandomizedDelaySec=10s
+Unit=xinbaoyan-judge-watchdog.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,32 @@
+[Unit]
+Description=Xinbaoyan FastAPI business API
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=xinbaoyan
+Group=xinbaoyan
+WorkingDirectory=/opt/xinbaoyan/current
+EnvironmentFile=/etc/xinbaoyan/app.env
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/xinbaoyan/current/.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 2 --proxy-headers --forwarded-allow-ips 127.0.0.1
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=/var/lib/xinbaoyan/data
+CapabilityBoundingSet=
+
+[Install]
+WantedBy=multi-user.target
