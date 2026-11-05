@@ -72,15 +72,16 @@ sudo git clone https://github.com/linchongfan/online-judge.git /opt/xinbaoyan-sr
 cd /opt/xinbaoyan-src
 
 # 2. 安装系统依赖、创建低权账号和目录、生成随机密钥、安装 Nginx。
-#    传入域名时会自动申请 Let's Encrypt 证书；传入纯 IP 时跳过证书，直接以 HTTP 80 端口提供服务。
-sudo bash deploy/linux/bootstrap.sh <地址>
+#    传入域名时会自动申请 Let's Encrypt 证书；传入纯 IP 时跳过证书，直接以 HTTP 提供服务。
+#    第二个参数是前端 HTTP 端口，默认 80；被占用时可换成 9898 等。
+sudo bash deploy/linux/bootstrap.sh <地址> [HTTP端口]
 
 # 3. bootstrap 不回显密钥。设置 SMTP 和现有基础设施的真实凭据。
 sudoedit /etc/xinbaoyan/app.env
 sudoedit /etc/xinbaoyan/infra.env
 ```
 
-**纯 IP 模式说明**：Let's Encrypt 等受信任 CA 不为裸 IP 签发证书，因此 IP 模式使用 HTTP 80 端口，`bootstrap.sh` 会自动把 `REFRESH_COOKIE_SECURE` 设为 `false` 并把 CORS 来源改为 `http://`，登录和会话在明文传输下可用，但**不适合生产长期使用**；有了域名后重新执行 `bootstrap.sh 域名` 即可切换到 HTTPS。
+**纯 IP 模式说明**：Let's Encrypt 等受信任 CA 不为裸 IP 签发证书，因此 IP 模式使用 HTTP，`bootstrap.sh` 会自动把 `REFRESH_COOKIE_SECURE` 设为 `false` 并把 CORS 来源改为 `http://`，登录和会话在明文传输下可用，但**不适合生产长期使用**；有了域名后重新执行 `bootstrap.sh 域名` 即可切换到 HTTPS。默认 HTTP 端口为 80，被其他服务（如 1Panel OpenResty）占用时，可加第二个参数换端口，例如 `sudo bash deploy/linux/bootstrap.sh 1.2.3.4 9898`，之后通过 `http://IP:9898` 访问。
 
 图中 1Panel 已运行 MySQL `8.4.13` 和 Redis `8.10.3` 时，保持 `/etc/xinbaoyan/infra.env` 的 `INFRA_MODE=external`，不会再创建第二套容器。先在 1Panel 创建数据库 `xinbaoyan`、仅拥有该库权限的账号 `oj`，并确认 Redis 已设置密码。然后：
 

@@ -172,13 +172,13 @@ bun run build
 配套文件位于 `deploy/linux/` 与 `deploy/judge-linux/`，适用于 Ubuntu 22.04/24.04 LTS（22.04 会自动添加 deadsnakes PPA 安装 Python 3.12）。业务首次部署：
 
 ```bash
-sudo bash deploy/linux/bootstrap.sh <域名或服务器IP>
+sudo bash deploy/linux/bootstrap.sh <域名或服务器IP> [HTTP端口]
 sudoedit /etc/xinbaoyan/app.env    # 替换 SMTP 占位符并同步数据库/Redis URL
 sudoedit /etc/xinbaoyan/infra.env  # 使用 1Panel 现有实例时保持 INFRA_MODE=external 并填写真实凭据
 sudo bash deploy/linux/deploy.sh
 ```
 
-`bootstrap.sh` 接受域名或纯 IP：域名模式自动申请 Let's Encrypt 证书并启用 HTTPS；纯 IP 模式跳过证书，以 HTTP 80 端口提供服务（自动关闭 Secure Cookie），适合临时调试，有了域名后重新执行同一命令即可切换。
+`bootstrap.sh` 接受域名或纯 IP，第二个参数是前端 HTTP 端口（默认 80，被占用时可换 9898 等）：域名模式自动申请 Let's Encrypt 证书并启用 HTTPS；纯 IP 模式跳过证书，以 HTTP 提供服务（自动关闭 Secure Cookie），适合临时调试，有了域名后重新执行同一命令即可切换。
 
 脚本会生成独立随机密钥、申请 HTTPS 证书、安装 systemd/Nginx 配置，并完成依赖安装、测试、前端构建、迁移前备份、Alembic 迁移、版本切换和健康检查。后续更新重复执行 `deploy.sh` 即可；健康检查失败且存在旧版本时自动回切应用代码，但不会擅自回滚数据库。
 
