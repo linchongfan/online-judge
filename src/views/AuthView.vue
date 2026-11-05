@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { ArrowRight, Back, Check, Lock, Message, Right, Setting, User } from '@element-plus/icons-vue'
+import { Back, Check, Lock, Message, Right, User } from '@element-plus/icons-vue'
 import AppLogo from '../components/AppLogo.vue'
 import { requestPasswordResetCode, resetPassword } from '../api/auth'
 import { ApiError } from '../api/client'
@@ -23,7 +23,6 @@ const registerFormRef = ref<FormInstance>()
 const forgotFormRef = ref<FormInstance>()
 const loading = ref(false)
 const codeSending = ref(false)
-const selectedRole = ref<UserRole>(route.query.role === 'admin' ? 'admin' : 'user')
 const recovered = ref(false)
 const countdown = ref(0)
 let countdownTimer: ReturnType<typeof setInterval> | undefined
@@ -31,8 +30,6 @@ let countdownTimer: ReturnType<typeof setInterval> | undefined
 const loginForm = reactive({ account: '', password: '', remember: true })
 const registerForm = reactive({ username: '', nickname: '', email: '', password: '', confirmPassword: '', agreement: false })
 const forgotForm = reactive({ email: '', code: '', password: '', confirmPassword: '' })
-// Demo quick-login entries are a development convenience only; production
-// builds must not ship hardcoded credentials on the login page.
 const isDev = import.meta.env.DEV
 
 const copy = computed(() => ({
@@ -145,16 +142,6 @@ async function submitLogin() {
   }
 }
 
-async function quickLogin(role: UserRole) {
-  if (loading.value) return
-  selectedRole.value = role
-  loginForm.account = role === 'admin' ? 'admin' : 'demo'
-  loginForm.password = role === 'admin' ? 'Admin12345' : 'Demo12345'
-  await nextTick()
-  loginFormRef.value?.clearValidate()
-  await submitLogin()
-}
-
 async function submitRegister() {
   if (loading.value || !await validate(registerFormRef.value)) return
   loading.value = true
@@ -244,10 +231,6 @@ watch(mode, async () => {
   forgotFormRef.value?.clearValidate()
 })
 
-watch(() => route.query.role, (role) => {
-  if (mode.value === 'login') selectedRole.value = role === 'admin' ? 'admin' : 'user'
-})
-
 onBeforeUnmount(() => {
   if (countdownTimer) clearInterval(countdownTimer)
 })
@@ -307,14 +290,6 @@ onBeforeUnmount(() => {
           </div>
 
           <el-form v-if="mode === 'login'" ref="loginFormRef" :model="loginForm" :rules="loginRules" label-position="top" size="large" @submit.prevent="submitCurrent">
-            <div class="role-switch" aria-label="登录身份">
-              <button type="button" :class="{ active: selectedRole === 'user' }" @click="selectedRole = 'user'">
-                <el-icon><User /></el-icon>普通用户
-              </button>
-              <button type="button" :class="{ active: selectedRole === 'admin' }" @click="selectedRole = 'admin'">
-                <el-icon><Setting /></el-icon>管理员
-              </button>
-            </div>
             <el-form-item label="用户名或邮箱" prop="account">
               <el-input v-model.trim="loginForm.account" placeholder="请输入用户名或邮箱" autocomplete="username" :prefix-icon="User" />
             </el-form-item>
@@ -326,13 +301,6 @@ onBeforeUnmount(() => {
               <router-link :to="{ path: '/forgot', query: authQuery }">忘记密码？</router-link>
             </div>
             <el-button class="submit-button" type="primary" native-type="submit" :loading="loading">登 录</el-button>
-            <template v-if="isDev">
-              <div class="quick-divider"><span>或使用演示账号快速体验</span></div>
-              <div class="quick-actions">
-                <button type="button" :disabled="loading" @click="quickLogin('user')"><el-icon><User /></el-icon><span>用户快捷入口<small>探索题库与个人中心</small></span><el-icon><ArrowRight /></el-icon></button>
-                <button type="button" :disabled="loading" @click="quickLogin('admin')"><el-icon><Setting /></el-icon><span>管理员快捷入口<small>体验完整管理后台</small></span><el-icon><ArrowRight /></el-icon></button>
-              </div>
-            </template>
             <p class="mode-switch">还没有账号？<router-link :to="{ path: '/register', query: authQuery }">免费注册<el-icon><Right /></el-icon></router-link></p>
           </el-form>
 
@@ -447,9 +415,6 @@ onBeforeUnmount(() => {
 .form-heading .eyebrow { margin-bottom: 10px; }
 .form-heading h2, .recovery-success h2 { margin: 0; color: var(--text-strong); font-size: 29px; letter-spacing: -.8px; }
 .form-heading p { color: var(--text-secondary); margin: 10px 0 0; line-height: 1.7; font-size: 13px; }
-.role-switch { display: grid; grid-template-columns: 1fr 1fr; padding: 4px; gap: 4px; margin-bottom: 23px; border-radius: 9px; background: var(--surface-soft); border: 1px solid var(--border); }
-.role-switch button { height: 36px; border: 0; border-radius: 6px; background: transparent; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 12px; transition: color .2s, background-color .2s; }
-.role-switch button.active { color: var(--primary); background: #fff; box-shadow: 0 2px 7px rgba(34,76,135,.08); font-weight: 600; }
 .auth-card :deep(.el-form-item) { margin-bottom: 19px; }
 .auth-card :deep(.el-form-item__label) { color: var(--text); font-size: 12px; font-weight: 500; padding-bottom: 7px !important; }
 .auth-card :deep(.el-input__wrapper) { padding: 4px 13px; }
@@ -457,15 +422,6 @@ onBeforeUnmount(() => {
 .form-options :deep(.el-checkbox__label) { font-size: 12px; color: var(--text-secondary); }
 .form-options a { color: var(--primary); text-decoration: none; font-size: 12px; }
 .submit-button { width: 100%; height: 43px; font-size: 14px; letter-spacing: 2px; box-shadow: 0 7px 18px rgba(21,87,214,.14); }
-.quick-divider { display: flex; align-items: center; gap: 12px; margin: 24px 0 15px; color: var(--text-tertiary); font-size: 10px; white-space: nowrap; }
-.quick-divider::before, .quick-divider::after { content: ''; height: 1px; background: var(--border); flex: 1; }
-.quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.quick-actions button { min-width: 0; display: flex; align-items: center; gap: 8px; text-align: left; padding: 12px 10px; border: 1px solid var(--border); border-radius: 8px; background: #fff; color: var(--text-secondary); cursor: pointer; transition: border-color .2s, background-color .2s; }
-.quick-actions button:hover { border-color: #9dbcec; background: #f7faff; color: var(--primary); }
-.quick-actions button:disabled { cursor: not-allowed; opacity: .55; }
-.quick-actions button > .el-icon:last-child { margin-left: auto; font-size: 11px; }
-.quick-actions button span { min-width: 0; display: flex; flex-direction: column; color: var(--text); font-size: 11px; font-weight: 500; }
-.quick-actions small { color: var(--text-tertiary); font-size: 8px; font-weight: 400; margin-top: 4px; white-space: nowrap; }
 .mode-switch { margin: 23px 0 0; display: flex; justify-content: center; align-items: center; gap: 5px; color: var(--text-tertiary); font-size: 12px; }
 .mode-switch a { color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 3px; font-weight: 500; }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -506,9 +462,6 @@ onBeforeUnmount(() => {
   .mobile-brand { margin-bottom: 38px; }
   .form-heading h2 { font-size: 26px; }
   .field-row { grid-template-columns: 1fr; gap: 0; }
-  .quick-actions { grid-template-columns: 1fr; }
-  .quick-actions button { padding: 11px 13px; }
-  .quick-actions small { font-size: 9px; }
   .form-footer { padding-top: 35px; }
 }
 </style>
