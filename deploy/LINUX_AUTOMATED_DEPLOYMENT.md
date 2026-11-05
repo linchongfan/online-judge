@@ -58,21 +58,24 @@
 2. 域名 `oj.example.com` 的 A/AAAA 记录已指向业务机，且 80、443 可达。
 3. 准备证书注册邮箱、生产 SMTP 参数和管理员账号信息。
 4. SSH 仅对受控来源开放；云安全组默认拒绝其他入站。
-5. 源码位于服务器 `/opt/xinbaoyan-src`。可通过受控 Git 仓库克隆或 CI 上传，不要将本地 `.env`、`data/`、`node_modules/` 一并上传。
-6. 首次 bootstrap 需要访问 Ubuntu、npm、Docker Hub 和 Let's Encrypt。受限网络应预先准备镜像与代理。
+5. 源码通过 Git 从 GitHub 克隆到服务器 `/opt/xinbaoyan-src`（公开仓库可直接克隆；私有仓库需先在服务器配置 SSH 密钥或访问令牌）。
+6. 首次 bootstrap 需要访问 GitHub、Ubuntu 软件源、npm、Docker Hub（仅 compose 模式）和 Let's Encrypt。受限网络应预先准备镜像与代理。
 
-## 3. 一键初始化与首次发布
+## 3. 从 GitHub 获取并首次发布
 
-以下命令在源码根目录执行：
+以下命令在服务器上以 root 或 sudo 执行：
 
 ```bash
+# 1. 克隆代码（公开仓库无需认证）
+sudo apt-get update && sudo apt-get install -y git
+sudo git clone https://github.com/linchongfan/online-judge.git /opt/xinbaoyan-src
 cd /opt/xinbaoyan-src
 
-# 安装依赖、创建低权账号和目录、生成随机密钥、申请证书、安装 systemd/Nginx 配置。
+# 2. 安装系统依赖、创建低权账号和目录、生成随机密钥、申请证书、安装 systemd/Nginx 配置。
 sudo LETSENCRYPT_EMAIL=ops@example.com \
   bash deploy/linux/bootstrap.sh oj.example.com
 
-# bootstrap 不回显密钥。设置 SMTP 和现有基础设施的真实凭据。
+# 3. bootstrap 不回显密钥。设置 SMTP 和现有基础设施的真实凭据。
 sudoedit /etc/xinbaoyan/app.env
 sudoedit /etc/xinbaoyan/infra.env
 ```
@@ -155,10 +158,25 @@ sudo RUN_TESTS=0 bash deploy/linux/deploy.sh
 
 ### 5.1 更新
 
+在 GitHub 上推送新提交后，在服务器上拉取并重新发布：
+
 ```bash
 cd /opt/xinbaoyan-src
-git pull --ff-only                 # 使用 Git 分发时；也可由 CI 上传同一提交
+sudo git pull --ff-only
 sudo bash deploy/linux/deploy.sh
+```
+
+注意：
+
+- 用 `--ff-only` 防止服务器上产生合并提交；若拉取被拒绝，说明服务器上的文件被改动过，先核对差异再处理，不要强行合并。
+- 不要修改 `/opt/xinbaoyan-src` 里的受版本控制文件来做服务器本地定制；环境差异一律通过 `/etc/xinbaoyan/`、`/etc/xinbaoyan-judge/` 下的配置表达，否则下次 `git pull` 会冲突。
+- 仓库若为私有，服务器克隆需先配置凭据，例如 SSH 部署密钥（推荐，只读权限）：
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/github_deploy -N ""
+cat ~/.ssh/github_deploy.pub   # 添加到 GitHub 仓库 Settings → Deploy keys（勾选 read-only）
+git config --global core.sshCommand "ssh -i ~/.ssh/github_deploy"
+sudo git clone git@github.com:linchongfan/online-judge.git /opt/xinbaoyan-src
 ```
 
 查看当前版本与服务：
