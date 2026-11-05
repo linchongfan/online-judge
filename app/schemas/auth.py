@@ -37,7 +37,7 @@ class RegisterRequest(PasswordStrengthMixin, ApiSchema):
     @classmethod
     def validate_username(cls, value: str) -> str:
         if not USERNAME_PATTERN.fullmatch(value):
-            raise ValueError("用户名只能包含字母、数字和下划线")
+            raise ValueError("用户名只能包含字母、数字、下划线和 @ 符号")
         return value
 
     @field_validator("nickname")

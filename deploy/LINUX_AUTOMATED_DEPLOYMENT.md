@@ -88,6 +88,15 @@ sudoedit /etc/xinbaoyan/infra.env
 
 外部模式会执行真实 `SELECT 1` 与 Redis `PING` 检查；备份使用本机 `mysqldump`，不依赖 1Panel 容器名称。
 
+发布完成并通过健康检查后，`deploy.sh` 会自动创建两个初始账号（幂等，已存在则跳过）：
+
+| 角色 | 账号 | 密码 |
+| --- | --- | --- |
+| 管理员 | `admin@123321` | `admin@123321` |
+| 测试用户 | `test@123456` | `test@123456` |
+
+用户名规则已支持 `@`。首次登录后请立即修改密码；禁用自动创建可用 `sudo CREATE_DEFAULT_USERS=0 bash deploy/linux/deploy.sh`，覆盖默认值可在部署前设置 `DEFAULT_ADMIN_USERNAME`、`DEFAULT_ADMIN_PASSWORD`、`DEFAULT_ADMIN_EMAIL`、`DEFAULT_TEST_*` 环境变量。
+
 ```bash
 # 构建、测试、连接现有基础设施、备份、迁移、发布并健康检查。
 sudo bash deploy/linux/deploy.sh

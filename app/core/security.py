@@ -12,7 +12,7 @@ from fastapi import Request
 from app.core.config import get_settings
 
 _password_hasher = PasswordHasher()
-USERNAME_PATTERN = re.compile(r"^[A-Za-z0-9_]{3,32}$")
+USERNAME_PATTERN = re.compile(r"^[A-Za-z0-9_@]{3,32}$")
 
 
 def hash_password(password: str) -> str:

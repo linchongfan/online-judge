@@ -116,6 +116,11 @@ bun run build
     source "$APP_ENV"
     set +a
     .venv/bin/python -m alembic upgrade head
+    # Create the two announced default accounts once (idempotent).
+    # Disable with CREATE_DEFAULT_USERS=0.
+    if [[ ${CREATE_DEFAULT_USERS:-1} == 1 ]]; then
+        .venv/bin/python scripts/ensure_default_users.py
+    fi
 )
 
 activate_release() {

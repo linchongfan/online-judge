@@ -180,6 +180,15 @@ sudo bash deploy/linux/deploy.sh
 
 脚本会生成独立随机密钥、申请 HTTPS 证书、安装 systemd/Nginx 配置，并完成依赖安装、测试、前端构建、迁移前备份、Alembic 迁移、版本切换和健康检查。后续更新重复执行 `deploy.sh` 即可；健康检查失败且存在旧版本时自动回切应用代码，但不会擅自回滚数据库。
 
+发布完成后自动创建两个初始账号（幂等，重复部署跳过）：
+
+| 角色 | 账号 | 密码 |
+| --- | --- | --- |
+| 管理员 | `admin@123321` | `admin@123321` |
+| 测试用户 | `test@123456` | `test@123456` |
+
+首次登录后请立即在个人中心修改密码。禁用自动创建可用 `sudo CREATE_DEFAULT_USERS=0 bash deploy/linux/deploy.sh`，首次部署前也可用 `DEFAULT_ADMIN_USERNAME` 等环境变量覆盖默认值。
+
 完整的前置条件、同机沙箱安装、更新回滚、备份恢复与排障见 **[Linux 单机自动化部署方案](deploy/LINUX_AUTOMATED_DEPLOYMENT.md)**。沙箱使用独立低权账号、cgroup v2、namespace 和只读 rootfs；安装脚本不会自动启动判题 Worker，必须先通过沙箱验收。`local` 后端不得用于真实用户代码。
 
 ## 配置与持久化
