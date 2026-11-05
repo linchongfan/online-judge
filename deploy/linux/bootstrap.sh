@@ -5,13 +5,17 @@ if [[ ${EUID} -ne 0 ]]; then
     echo "Run as root: sudo LETSENCRYPT_EMAIL=admin@example.com bash deploy/linux/bootstrap.sh oj.example.com" >&2
     exit 1
 fi
-if [[ $# -ne 1 ]] || [[ ! $1 =~ ^[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]; then
-    echo "Usage: $0 <public-domain>" >&2
+if [[ $# -ne 1 ]]; then
+    echo "Usage: $0 <public-domain-or-ip>" >&2
     exit 1
 fi
-: "${LETSENCRYPT_EMAIL:?Set LETSENCRYPT_EMAIL for certificate registration}"
+: "${LETSENCRYPT_EMAIL:=unused@example.com}"
 
 DOMAIN=$1
+IS_IP=0
+if [[ $DOMAIN =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    IS_IP=1
+fi
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 BASE_DIR=/opt/xinbaoyan
 INFRA_DIR="$BASE_DIR/infra"
@@ -73,25 +77,34 @@ done
 install -d -m 755 -o root -g root /etc/letsencrypt/renewal-hooks/deploy /var/www/certbot
 install -m 700 -o root -g root "$SCRIPT_DIR/renewal-hook.sh" /etc/letsencrypt/renewal-hooks/deploy/xinbaoyan-nginx.sh
 
-if [[ ! -s /etc/letsencrypt/live/$DOMAIN/fullchain.pem ]]; then
-    sed "s/__DOMAIN__/$DOMAIN/g" "$SCRIPT_DIR/nginx-acme.conf" > /etc/nginx/sites-available/xinbaoyan-acme.conf
-    ln -sfn /etc/nginx/sites-available/xinbaoyan-acme.conf /etc/nginx/sites-enabled/xinbaoyan-acme.conf
-    nginx -t
-    systemctl enable --now nginx
-    systemctl restart nginx
-    certbot certonly --webroot --webroot-path /var/www/certbot \
-        --domain "$DOMAIN" --email "$LETSENCRYPT_EMAIL" \
-        --agree-tos --non-interactive --keep-until-expiring
-    unlink /etc/nginx/sites-enabled/xinbaoyan-acme.conf
+if [[ $IS_IP == 1 ]]; then
+    # No trusted certificate authority issues certificates for bare IPs; run
+    # plain HTTP on port 80 and skip certbot entirely.
+    echo "IP-only deployment detected: skipping Let's Encrypt, using plain HTTP on port 80."
+    sed "s/__DOMAIN__/$DOMAIN/g" "$SCRIPT_DIR/nginx-ip.conf" > /etc/nginx/sites-available/xinbaoyan.conf
+    rm -f /etc/nginx/sites-enabled/xinbaoyan-acme.conf
+else
+    if [[ ! -s /etc/letsencrypt/live/$DOMAIN/fullchain.pem ]]; then
+        sed "s/__DOMAIN__/$DOMAIN/g" "$SCRIPT_DIR/nginx-acme.conf" > /etc/nginx/sites-available/xinbaoyan-acme.conf
+        ln -sfn /etc/nginx/sites-available/xinbaoyan-acme.conf /etc/nginx/sites-enabled/xinbaoyan-acme.conf
+        nginx -t
+        systemctl enable --now nginx
+        systemctl restart nginx
+        certbot certonly --webroot --webroot-path /var/www/certbot \
+            --domain "$DOMAIN" --email "$LETSENCRYPT_EMAIL" \
+            --agree-tos --non-interactive --keep-until-expiring
+        unlink /etc/nginx/sites-enabled/xinbaoyan-acme.conf
+    fi
+    sed "s/__DOMAIN__/$DOMAIN/g" "$SCRIPT_DIR/nginx.conf" > /etc/nginx/sites-available/xinbaoyan.conf
 fi
-
-sed "s/__DOMAIN__/$DOMAIN/g" "$SCRIPT_DIR/nginx.conf" > /etc/nginx/sites-available/xinbaoyan.conf
 ln -sfn /etc/nginx/sites-available/xinbaoyan.conf /etc/nginx/sites-enabled/xinbaoyan.conf
 nginx -t
 systemctl enable --now nginx
 systemctl restart nginx
 systemctl daemon-reload
-systemctl enable --now certbot.timer
+if [[ $IS_IP == 0 ]]; then
+    systemctl enable --now certbot.timer
+fi
 
 cat <<EOF
 Bootstrap complete.
