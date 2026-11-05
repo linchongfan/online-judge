@@ -42,9 +42,9 @@ if [[ -d /usr/lib/jvm/java-17-openjdk-amd64 ]]; then
     mkdir -p "$ROOTFS/usr/lib/jvm"
     copy_tree /usr/lib/jvm/java-17-openjdk-amd64 "$ROOTFS/usr/lib/jvm/java-17-openjdk-amd64"
 fi
-if [[ -d /usr/lib/python3.12 ]]; then
+if [[ -d /usr/lib/python3 ]]; then
     mkdir -p "$ROOTFS/usr/lib"
-    copy_tree /usr/lib/python3.12 "$ROOTFS/usr/lib/python3.12"
+    copy_tree /usr/lib/python3 "$ROOTFS/usr/lib/python3"
 fi
 mkdir -p "$ROOTFS/lib/x86_64-linux-gnu" "$ROOTFS/lib64" "$ROOTFS/etc" "$ROOTFS/tmp" "$ROOTFS/bin" "$ROOTFS/usr/bin"
 if [[ -d /lib/x86_64-linux-gnu ]]; then
@@ -76,7 +76,7 @@ EOF
 
 find "$ROOTFS" -type d -exec chmod 755 {} +
 chmod 1777 "$ROOTFS/tmp"
-python3.12 - <<'PY'
+python3 - <<'PY'
 import hashlib
 import os
 from pathlib import Path

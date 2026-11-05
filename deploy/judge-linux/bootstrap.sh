@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 if [[ ${EUID} -ne 0 ]]; then
-    echo "Run as root on an authorized disposable Ubuntu 24.04 judge VM." >&2
+    echo "Run as root on an authorized disposable Ubuntu 22.04/24.04 judge host." >&2
     exit 1
 fi
 if [[ ${1:-} == "--yes" ]]; then
@@ -14,9 +14,21 @@ else
 fi
 
 source /etc/os-release
-if [[ ${ID:-} != ubuntu || ${VERSION_ID:-} != 24.04 ]]; then
-    echo "Supported baseline: Ubuntu 24.04 LTS only." >&2
+if [[ ${ID:-} != ubuntu ]]; then
+    echo "Supported baseline: Ubuntu only." >&2
     exit 1
+fi
+case ${VERSION_ID:-} in
+    24.04|22.04) ;;
+    *)
+        echo "Supported baseline: Ubuntu 22.04/24.04 LTS only (got ${PRETTY_NAME:-unknown})." >&2
+        exit 1
+        ;;
+esac
+if [[ ${VERSION_ID} == 22.04 ]] && ! apt-cache show python3.12 >/dev/null 2>&1; then
+    apt-get install -y software-properties-common
+    add-apt-repository -y ppa:deadsnakes/ppa
+    apt-get update
 fi
 if [[ ! -f /sys/fs/cgroup/cgroup.controllers ]]; then
     echo "cgroup v2 unified hierarchy is required." >&2
@@ -33,8 +45,8 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y --no-install-recommends \
     build-essential ca-certificates curl debootstrap gcc-13 g++-13 git gzip \
-    libcap-dev libseccomp-dev locales openjdk-17-jdk-headless pkg-config python3.12 python3.12-venv \
-    python3.12-minimal rsync sudo tar util-linux wireguard-tools
+    libcap-dev libseccomp-dev locales openjdk-17-jdk-headless pkg-config python3 python3-venv \
+    python3-minimal rsync sudo tar util-linux wireguard-tools
 
 # Build the pinned IOI isolate from source. This deliberately avoids a floating distro package.
 ISOLATE_VERSION="2.0"
@@ -57,9 +69,9 @@ mkdir -p /opt/judge-toolchains/jdk17/bin /opt/judge-toolchains/python312/bin
 for tool in javac java jar; do
     ln -sfn "/usr/bin/${tool}" "/opt/judge-toolchains/jdk17/bin/${tool}"
 done
-ln -sfn /usr/bin/python3.12 /opt/judge-toolchains/python312/bin/python3
+ln -sfn "$(command -v python3)" /opt/judge-toolchains/python312/bin/python3
 
-python3.12 - <<'PY'
+python3 - <<'PY'
 import hashlib
 import os
 from pathlib import Path

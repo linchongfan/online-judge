@@ -28,7 +28,7 @@ fi
 getent group xinbaoyan >/dev/null || { echo "Missing xinbaoyan group; run bootstrap.sh first." >&2; exit 1; }
 install -d -m 750 -o root -g xinbaoyan "$CONFIG_DIR"
 
-DOMAIN="$DOMAIN" SCRIPT_DIR="$SCRIPT_DIR" CONFIG_DIR="$CONFIG_DIR" python3.12 - <<'PY'
+DOMAIN="$DOMAIN" SCRIPT_DIR="$SCRIPT_DIR" CONFIG_DIR="$CONFIG_DIR" python3 - <<'PY'
 import os
 import secrets
 import shutil

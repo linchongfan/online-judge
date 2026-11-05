@@ -27,7 +27,7 @@ install -d -m 750 -o xinbaoyan-judge -g xinbaoyan-judge \
 
 if [[ ! -e $JUDGE_ENV ]]; then
     APP_ENV="$APP_ENV" INFRA_ENV="$INFRA_ENV" JUDGE_ENV="$JUDGE_ENV" \
-    TEMPLATE="$SCRIPT_DIR/judge.env.example" python3.12 - <<'PY'
+    TEMPLATE="$SCRIPT_DIR/judge.env.example" python3 - <<'PY'
 import os
 import shutil
 from pathlib import Path

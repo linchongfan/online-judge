@@ -1,6 +1,6 @@
 # Linux 单机自动化部署方案
 
-本文给出可直接执行的 Ubuntu 24.04 LTS **单机部署流程**，配套脚本位于 [`deploy/linux/`](./linux/) 与 [`deploy/judge-linux/`](./judge-linux/)。前端、业务后端、判题沙箱、MySQL 和 Redis 均部署在同一台服务器。
+本文给出可直接执行的 Ubuntu 22.04/24.04 LTS **单机部署流程**，配套脚本位于 [`deploy/linux/`](./linux/) 与 [`deploy/judge-linux/`](./judge-linux/)。前端、业务后端、判题沙箱、MySQL 和 Redis 均部署在同一台服务器。
 
 > **端口与版本**：前端 Nginx 使用公网 `80/443`；FastAPI 后端仅监听 `127.0.0.1:8000`；MySQL 固定为 `8.4.13`，Redis 固定为 `8.10.3`。MySQL、Redis 和后端端口均不对公网开放。
 >
@@ -54,7 +54,7 @@
 
 ### 2.2 上线前检查
 
-1. 一台全新或已备份的 **Ubuntu 24.04 LTS x86_64** 主机；脚本会检查系统版本。
+1. 一台全新或已备份的 **Ubuntu 22.04 或 24.04 LTS x86_64** 主机；脚本会检查系统版本（22.04 自动添加 deadsnakes PPA 安装 Python 3.12）。
 2. 域名 `oj.example.com` 的 A/AAAA 记录已指向业务机，且 80、443 可达。
 3. 准备证书注册邮箱、生产 SMTP 参数和管理员账号信息。
 4. SSH 仅对受控来源开放；云安全组默认拒绝其他入站。

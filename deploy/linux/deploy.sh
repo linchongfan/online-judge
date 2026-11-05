@@ -14,7 +14,7 @@ APP_ENV=/etc/xinbaoyan/app.env
 INFRA_ENV=/etc/xinbaoyan/infra.env
 RUN_TESTS=${RUN_TESTS:-1}
 
-for command in python3.12 bun docker rsync curl systemctl; do
+for command in python3 bun docker rsync curl systemctl; do
     command -v "$command" >/dev/null || { echo "Missing command: $command; run bootstrap.sh first." >&2; exit 1; }
 done
 [[ -r $APP_ENV && -r $INFRA_ENV ]] || { echo "Missing environment files; run bootstrap.sh first." >&2; exit 1; }
@@ -84,7 +84,7 @@ rsync -a --delete \
     "$PROJECT_ROOT/" "$RELEASE_DIR/"
 
 cd "$RELEASE_DIR"
-python3.12 -m venv .venv
+python3 -m venv .venv
 .venv/bin/python -m pip install --upgrade pip
 if [[ $RUN_TESTS == 1 ]]; then
     .venv/bin/python -m pip install '.[dev]'

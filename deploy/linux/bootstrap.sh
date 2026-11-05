@@ -17,16 +17,37 @@ BASE_DIR=/opt/xinbaoyan
 INFRA_DIR="$BASE_DIR/infra"
 
 source /etc/os-release
-if [[ ${ID:-} != ubuntu || ${VERSION_ID:-} != 24.04 ]]; then
-    echo "This bootstrap supports Ubuntu 24.04 LTS only." >&2
+if [[ ${ID:-} != ubuntu ]]; then
+    echo "This bootstrap supports Ubuntu only." >&2
     exit 1
 fi
+case ${VERSION_ID:-} in
+    24.04)
+        PYTHON_PKG="python3.12"
+        PYTHON_VENV_PKG="python3.12-venv"
+        ;;
+    22.04)
+        # Jammy ships Python 3.10; the project requires >=3.12,<3.13, so add the
+        # deadsnakes PPA before installing Python 3.12.
+        PYTHON_PKG="python3.12"
+        PYTHON_VENV_PKG="python3.12-venv"
+        if ! apt-cache show python3.12 >/dev/null 2>&1; then
+            apt-get install -y software-properties-common
+            add-apt-repository -y ppa:deadsnakes/ppa
+            apt-get update
+        fi
+        ;;
+    *)
+        echo "This bootstrap supports Ubuntu 22.04 LTS and 24.04 LTS only (got ${PRETTY_NAME:-unknown})." >&2
+        exit 1
+        ;;
+esac
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y \
     ca-certificates certbot curl default-mysql-client docker.io docker-compose-v2 git gzip nginx nodejs npm openssl \
-    python3.12 python3.12-venv redis-tools rsync tar util-linux
+    "$PYTHON_PKG" "$PYTHON_VENV_PKG" redis-tools rsync tar util-linux
 
 if ! command -v bun >/dev/null 2>&1 || [[ $(bun --version) != 1.4.2 ]]; then
     npm install -g bun@1.4.2

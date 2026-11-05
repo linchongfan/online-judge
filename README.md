@@ -169,7 +169,7 @@ bun run build
 
 生产采用单机拓扑：Nginx 前端开放 `80/443`，FastAPI 后端监听 `127.0.0.1:8000`，MySQL 8.4.13 与 Redis 8.10.3 仅监听本机，isolate 判题沙箱与后端同机。后端、数据库和 Redis 端口均不对公网开放。
 
-配套文件位于 `deploy/linux/` 与 `deploy/judge-linux/`，适用于 Ubuntu 24.04 LTS。业务首次部署：
+配套文件位于 `deploy/linux/` 与 `deploy/judge-linux/`，适用于 Ubuntu 22.04/24.04 LTS（22.04 会自动添加 deadsnakes PPA 安装 Python 3.12）。业务首次部署：
 
 ```bash
 sudo LETSENCRYPT_EMAIL=ops@example.com bash deploy/linux/bootstrap.sh oj.example.com
