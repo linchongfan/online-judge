@@ -31,7 +31,7 @@ let generation = 0
 let detailGeneration = 0
 let poller: ReturnType<typeof setInterval> | undefined
 
-const languageLabels: Record<Language, string> = { cpp: 'C++11', c: 'C99', java: 'JDK 8', python: 'Python 3.12' }
+const languageLabels: Record<Language, string> = { cpp: 'C++', c: 'C', java: 'Java', python: 'Python3' }
 const statusOptions = (Object.keys(judgeStatusMap) as JudgeStatus[]).map((value) => ({ value, label: judgeStatusMap[value].label }))
 const languageOptions = (Object.keys(languageLabels) as Language[]).map((value) => ({ value, label: languageLabels[value] }))
 const acceptedCount = computed(() => records.value.filter((item) => item.status === 'AC').length)

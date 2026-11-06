@@ -48,7 +48,7 @@ const workerStatus = {
   busy: { label: '忙碌', tone: 'warning' },
   offline: { label: '已下线', tone: 'neutral' },
 }
-const languageLabels: Record<Language, string> = { cpp: 'C++11', c: 'C99', java: 'JDK 8', python: 'Python 3.12' }
+const languageLabels: Record<Language, string> = { cpp: 'C++', c: 'C', java: 'Java', python: 'Python3' }
 
 function resourceColor(value: number | null, offline = false) {
   if (value === null || offline) return '#b8c2ce'

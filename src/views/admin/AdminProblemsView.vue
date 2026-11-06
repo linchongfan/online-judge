@@ -64,7 +64,7 @@ const versionStatusMap: Record<AdminTestDataVersion['status'], { label: string; 
   invalid: { label: '校验失败', type: 'danger' },
 }
 const solutionLanguages: Language[] = ['cpp', 'c', 'java', 'python']
-const solutionLanguageLabels: Record<Language, string> = { cpp: 'C++11', c: 'C99', java: 'JDK 8', python: 'Python 3.12' }
+const solutionLanguageLabels: Record<Language, string> = { cpp: 'C++', c: 'C', java: 'Java', python: 'Python3' }
 
 const rows = ref<AdminProblem[]>([])
 const keyword = ref('')

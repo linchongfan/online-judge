@@ -55,7 +55,7 @@ const problemIds = computed(() => contest.value ? contest.value.problems.map(ite
 const currentSubmission = ref<Submission | null>(null)
 const activeSubmissionId = ref<string | null>(null)
 const operation = ref<'sample' | 'submit'>('submit')
-const languageLabels: Record<Language, string> = { cpp: 'C++11', c: 'C99', java: 'JDK 8', python: 'Python 3.12' }
+const languageLabels: Record<Language, string> = { cpp: 'C++', c: 'C', java: 'Java', python: 'Python3' }
 let saveTimer: ReturnType<typeof setTimeout> | undefined
 let loadGeneration = 0
 
