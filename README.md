@@ -4,7 +4,8 @@
 
 ## 文档导航
 
-- **[Linux 单机自动化部署方案](deploy/LINUX_AUTOMATED_DEPLOYMENT.md)**：前后端端口、同机沙箱、MySQL/Redis 固定版本、自动发布、备份恢复与验收。
+- **[Docker 容器化部署](deploy/DOCKER_DEPLOYMENT.md)**：当前线上方案，前后端/消费者/维护/判题全部容器化，复用 1Panel 的 MySQL 与 Redis。
+- **[Linux 单机自动化部署方案](deploy/LINUX_AUTOMATED_DEPLOYMENT.md)**：systemd + 宿主机 Nginx 的可选方案，含证书、备份、回切与排障。
 - **[生产部署与运维](deploy/README.md)**：上线顺序、安全边界、备份和失陷处置。
 - **[系统设计与安全防御计划](计划.md)**：功能范围、数据设计、威胁模型与验收标准。
 
@@ -14,9 +15,10 @@
 - 前端：Bun **1.4.2**（Linux 部署脚本固定版本）、Vue 3、TypeScript、Vite
 - 生产数据与队列：MySQL **8.4.13**、Redis **8.10.3**、Celery
 - 生产用户代码工具链基线：
-  - C/C++：GCC/G++ 13，C 使用 C99，C++ 使用 C++11
-  - Java：OpenJDK 17 编译，`--release 8` 保持 Java 8 语言/API 目标，入口为 `public class Main`
-  - Python：独立 Python 3.12，与业务后端 Python 隔离
+  - C/C++：GCC/G++ 13（C99 / C++11 语言标准），界面显示为 `C` / `C++`
+  - Java：OpenJDK 17，`--release 8` 保持 Java 8 语言/API 目标，入口为 `public class Main`，界面显示为 `Java`
+  - Python：独立 Python 3.12，界面显示为 `Python3`
+- 界面语言名称统一为 **C++ / C / Java / Python3**，与 `judge/languages.py` 的适配器一一对应。
 - 当前 Windows 开发机仍使用旧工具链；Linux 生产基线以上述版本为准，并在 CI 中做四语言判题结果比对。
 
 ## 本地启动业务后端
@@ -165,33 +167,34 @@ bun run build
 
 浏览器访问 `http://127.0.0.1:5173`。Vite 将 `/api` 代理到 `127.0.0.1:8000`；Access Token 仅保存在内存，刷新会话通过 HttpOnly Refresh Cookie 与 CSRF Cookie 完成。生产环境使用 Nginx 同源代理。
 
-## Linux 单机自动化部署
+## 生产部署（Docker 容器化）
 
-生产采用单机拓扑：Nginx 前端开放 `80/443`，FastAPI 后端监听 `127.0.0.1:8000`，MySQL 8.4.13 与 Redis 8.10.3 仅监听本机，isolate 判题沙箱与后端同机。后端、数据库和 Redis 端口均不对公网开放。
-
-配套文件位于 `deploy/linux/` 与 `deploy/judge-linux/`，适用于 Ubuntu 22.04/24.04 LTS（22.04 会自动添加 deadsnakes PPA 安装 Python 3.12）。业务首次部署：
+线上采用全容器拓扑：前端 Nginx 容器对外开放 `9898`，FastAPI、结果消费者、维护进程、备份与判题 Worker 分别运行在独立容器中；MySQL 8.4.13 与 Redis 8.10.3 复用服务器上已有的 1Panel 实例。后端、数据库与 Redis 端口均不对公网开放。
 
 ```bash
-sudo bash deploy/linux/bootstrap.sh <域名或服务器IP> [HTTP端口]
-sudoedit /etc/xinbaoyan/app.env    # 替换 SMTP 占位符并同步数据库/Redis URL
-sudoedit /etc/xinbaoyan/infra.env  # 使用 1Panel 现有实例时保持 INFRA_MODE=external 并填写真实凭据
-sudo bash deploy/linux/deploy.sh
+# 服务器上
+cd /opt/xinbaoyan-src && git pull --ff-only
+cd /opt/xinbaoyan-docker
+docker build -f backend.Dockerfile  -t xinbaoyan-backend:local  /opt/xinbaoyan-src
+docker build -f frontend.Dockerfile -t xinbaoyan-frontend:local /opt/xinbaoyan-src
+docker build -f judge.Dockerfile    -t xinbaoyan-judge:local    /opt/xinbaoyan-src
+./patch-backend-image.sh && ./patch-judge-image.sh
+docker compose up -d --force-recreate api result-consumer maintenance backup frontend
+docker compose --profile judge up -d --force-recreate judge-worker
 ```
 
-`bootstrap.sh` 接受域名或纯 IP，第二个参数是前端 HTTP 端口（默认 80，被占用时可换 9898 等）：域名模式自动申请 Let's Encrypt 证书并启用 HTTPS；纯 IP 模式跳过证书，以 HTTP 提供服务（自动关闭 Secure Cookie），适合临时调试，有了域名后重新执行同一命令即可切换。
+完整步骤、cgroup 前置、补丁说明、备份与回滚见 **[Docker 容器化部署](deploy/DOCKER_DEPLOYMENT.md)**。
 
-脚本会生成独立随机密钥、申请 HTTPS 证书、安装 systemd/Nginx 配置，并完成依赖安装、测试、前端构建、迁移前备份、Alembic 迁移、版本切换和健康检查。后续更新重复执行 `deploy.sh` 即可；健康检查失败且存在旧版本时自动回切应用代码，但不会擅自回滚数据库。
+`deploy/linux/` 与 `deploy/judge-linux/` 保留了 systemd + 宿主机 Nginx 的替代方案（Ubuntu 22.04/24.04，22.04 会自动添加 deadsnakes PPA 安装 Python 3.12），适用于需要自动申请 HTTPS 证书或不想引入容器编排的环境，详见 **[Linux 单机自动化部署方案](deploy/LINUX_AUTOMATED_DEPLOYMENT.md)**。
 
-发布完成后自动创建两个初始账号（幂等，重复部署跳过）：
+首次部署完成后会自动创建两个初始账号（幂等，重复部署跳过）：
 
 | 角色 | 账号 | 密码 |
 | --- | --- | --- |
 | 管理员 | `admin@123321` | `admin@123321` |
 | 测试用户 | `test@123456` | `test@123456` |
 
-首次登录后请立即在个人中心修改密码。禁用自动创建可用 `sudo CREATE_DEFAULT_USERS=0 bash deploy/linux/deploy.sh`，首次部署前也可用 `DEFAULT_ADMIN_USERNAME` 等环境变量覆盖默认值。
-
-完整的前置条件、同机沙箱安装、更新回滚、备份恢复与排障见 **[Linux 单机自动化部署方案](deploy/LINUX_AUTOMATED_DEPLOYMENT.md)**。沙箱使用独立低权账号、cgroup v2、namespace 和只读 rootfs；安装脚本不会自动启动判题 Worker，必须先通过沙箱验收。`local` 后端不得用于真实用户代码。
+首次登录后请立即在个人中心修改密码。禁用自动创建：systemd 方案用 `CREATE_DEFAULT_USERS=0`，容器方案跳过 `migrate` 服务中的建号步骤即可。`local` 沙箱后端不得用于真实用户代码。
 
 ## 配置与持久化
 
@@ -212,9 +215,13 @@ Linux 生产配置在 `/etc/xinbaoyan/`，持久化数据在 `/var/lib/xinbaoyan
 ## 测试与检查
 
 ```bash
-.venv/Scripts/python.exe -m pytest
+.venv/Scripts/python.exe -m pytest        # 113 passed, 14 skipped（Linux 专属用例在 Windows 跳过）
 .venv/Scripts/python.exe -m ruff check app judge tests
 .venv/Scripts/python.exe -m mypy app judge
+bun run test                              # 11 passed
+bun run build
 ```
 
-API 测试覆盖认证、角色权限、Refresh Token 轮换、题目发布、ZIP 安全校验、隐藏数据边界、提交幂等、竞赛时间/报名约束、ACM 罚时和结果回调去重。当前主机已装好 Redis 8 与四语言工具链，本机开发判题链路（`scripts/e2e_judge_acceptance.py`）可直接跑真实 AC/WA/CE 结果；MySQL 与生产沙箱验收仍需对应环境。
+API 测试覆盖认证、角色权限、Refresh Token 轮换、题目发布、ZIP 安全校验、隐藏数据边界、提交幂等、竞赛时间/报名约束、ACM 罚时、结果回调去重、默认账号幂等创建，以及判题后端的 TLE/MLE 元数据映射。Linux 判题侧另有 `tests/test_linux_isolate.py`（参数与元数据映射）和 `tests/test_linux_judge_vm.py`（需在判题机执行 `JUDGE_VM=1 pytest -m linux_judge_vm`）。
+
+线上判题已按四语言实测：C++ / C / Java / Python3 的正确解均返回 AC，错误解 WA、语法错误 CE、死循环 TLE、超量内存 MLE，且用户程序无法访问本机 Redis 与宿主机配置文件。端到端脚本 `scripts/e2e_judge_acceptance.py` 支持 `--base-url / --account / --password / --problem-id` 参数化。

@@ -1,4 +1,6 @@
-# Linux 单机自动化部署方案
+# Linux 单机自动化部署方案（systemd 可选方案）
+
+> 线上当前使用 **[Docker 容器化部署](./DOCKER_DEPLOYMENT.md)**。本文保留为不引入容器编排时的替代方案：Nginx、FastAPI、消费者、维护进程与判题 Worker 均由宿主机 systemd 管理，前端默认 80/443（可改为 9898 等）。两套方案共用同一套配置目录与持久化路径。
 
 本文给出可直接执行的 Ubuntu 22.04/24.04 LTS **单机部署流程**，配套脚本位于 [`deploy/linux/`](./linux/) 与 [`deploy/judge-linux/`](./judge-linux/)。前端、业务后端、判题沙箱、MySQL 和 Redis 均部署在同一台服务器。
 

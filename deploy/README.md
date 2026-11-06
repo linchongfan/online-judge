@@ -2,21 +2,20 @@
 
 ## 部署形态
 
-项目采用 **Linux 单机部署**：前端、业务后端、判题 Worker/沙箱、MySQL 和 Redis 位于同一台服务器。
+线上采用 **Docker 容器化**：前端、业务后端、结果消费者、维护进程、备份与判题 Worker 全部以容器运行，MySQL 与 Redis 复用服务器上已有的 1Panel 实例。
 
-- **前端**：Nginx 提供 Vue 静态文件，公网开放 `80/443`。
-- **后端**：FastAPI 监听 `127.0.0.1:8000`，由 Nginx 通过 `/api/` 同源代理，不对公网开放。
-- **MySQL**：使用服务器/1Panel 现有的 `8.4.13`，仅允许本机 `127.0.0.1:3306` 访问。
-- **Redis**：使用服务器/1Panel 现有的 `8.10.3`，仅允许本机 `127.0.0.1:6379` 访问。
-- **基础设施模式**：已有实例使用 `INFRA_MODE=external`，不会重复创建容器；全新服务器可选 `compose` 创建相同版本实例。
-- **判题**：与后端同机的 isolate Worker，通过本机 Redis 获取任务，通过 `127.0.0.1:8000` 发送签名心跳。
-- **持久化**：业务测试数据和备份目录位于 release 外；判题 rootfs、任务目录和元数据使用独立路径与账号。
+- **前端**：Nginx 容器，对外 `9898`，`/api/` 反代到本机 8000。
+- **后端**：FastAPI 容器，仅监听 `127.0.0.1:8000`。
+- **MySQL**：`8.4.13`，1Panel 容器，仅本机 `3306`。
+- **Redis**：`8.10.3`，1Panel 容器，仅本机 `6379`（db0 结果队列 / db1 Celery）。
+- **判题**：独立 `judge-worker` 容器，isolate + cgroup v2 + namespace，`--profile judge` 启动。
+- **持久化**：测试数据、备份、判题 work/meta 均在容器外的宿主机目录。
 
 ## 文档入口
 
-- **[Linux 单机自动化部署方案](./LINUX_AUTOMATED_DEPLOYMENT.md)**：初始化、发布、HTTPS、同机沙箱、备份恢复、更新回切和排障。
-- **[业务部署脚本与模板](./linux/)**：Nginx、Compose、systemd、发布和备份。
-- **[同机判题部署资产](./judge-linux/)**：isolate、rootfs、Worker、看门狗和验收测试入口。
+- **[Docker 容器化部署](./DOCKER_DEPLOYMENT.md)**：当前线上方案的服务清单、cgroup 前置、发布/补丁/备份/回滚。
+- **[Linux 单机自动化部署方案](./LINUX_AUTOMATED_DEPLOYMENT.md)**：systemd + 宿主机 Nginx 的替代方案。
+- **[业务部署脚本与模板](./linux/)**、**[判题部署资产](./judge-linux/)**：供 systemd 方案使用。
 - 根目录 [`README.md`](../README.md)：本地开发、功能说明与测试。
 
 ## 同机隔离边界
@@ -30,23 +29,25 @@
 - 首版 Worker 并发为 1；提高并发前必须验证整机资源预留、计时稳定性与 Web/数据库可用性。
 - 单机部署会扩大沙箱缺陷的影响，任一隔离、清理或恢复能力未通过验收，都不得开放公开提交。
 
-## 上线顺序
+## 上线顺序（容器方案）
 
-1. 准备 Ubuntu 22.04/24.04、域名、SMTP、独立随机密钥，只开放 SSH、80、443；后端和数据库端口不开放公网。
-2. 使用业务部署脚本安装 Nginx、MySQL 8.4.13、Redis 8.10.3，完成构建、测试、迁移前备份和 Alembic 迁移。
-3. 启动 API、结果消费者和维护进程，验证存活/就绪接口、注册登录、题库、上传、竞赛与管理权限。
-4. 在同一台服务器安装固定版本 isolate、工具链和最小 rootfs，创建独立判题账号与目录。
-5. 在隔离验收中验证低权 UID、文件系统隔离、禁网、CPU/墙钟/内存/进程/输出/磁盘硬限制、整组回收与看门狗。
-6. 只有全部验收通过后，才启动判题 Worker 和看门狗并开放公开提交。
-7. 演练停止接单、Worker 离线、超时重试、死信处置、备份恢复与整机重建。
+1. 准备 Ubuntu 服务器（已装 Docker 与 1Panel）、域名或公网 IP、SMTP、独立随机密钥；只开放 SSH 与前端端口。
+2. 在 1Panel 创建数据库 `xinbaoyan` 与仅限该库的账号，确认 Redis 已设密码。
+3. 准备 `/etc/xinbaoyan/app.container.env`、`/etc/xinbaoyan/infra.env`、`/etc/xinbaoyan-judge/judge.env`，权限 600/640，不进镜像。
+4. 构建 `backend` / `frontend` / `judge` 三个镜像，执行 `docker compose run --rm migrate` 完成迁移与默认账号创建。
+5. 启动 api、result-consumer、maintenance、backup、frontend，验证 `/api/v1/health/ready`、登录、题库、上传、竞赛与管理权限。
+6. 配置 cgroup v2 子树并授予判题容器最小能力集，先跑隔离验收（AC/WA/TLE/MLE/RE、禁网、宿主文件不可读、清理）。
+7. 只有验收通过后才 `--profile judge up -d judge-worker` 并开放公开提交。
+8. 演练停止接单、Worker 离线、超时重试、死信处置、备份恢复与整机重建。
 
 ## 配置与发布原则
 
 - `.env` 不进仓库；业务配置位于 `/etc/xinbaoyan/`，判题配置位于 `/etc/xinbaoyan-judge/`，均由 root 管理、对应服务组只读。
 - `SECRET_KEY` 与 `JUDGE_RESULT_SECRET` 必须独立且随机；数据库、Redis、SMTP 凭据不得复用开发默认值。
-- 每次发布生成独立 release，`current` 原子切换；数据、测试文件和判题 rootfs 位于 release 外。
-- API、判题 Worker、消费者和维护进程均由 systemd 管理；消费者与维护进程首版保持单实例。
-- 数据库只前向迁移，失败发布可自动回切代码但不自动 downgrade。回滚前必须确认新旧代码与表结构兼容。
+- 配置与持久化目录通过只读/读写挂载进入容器，不烘焙进镜像；容器重建不丢数据。
+- 消费者与维护进程必须单实例；扩副本前先验证队列、Outbox 与租约语义。
+- 镜像重建后需重新执行 `patch-backend-image.sh` / `patch-judge-image.sh`（服务器侧兼容补丁）。
+- 数据库只前向迁移，失败发布回滚镜像标签而非降级数据库。回滚前必须确认新旧版本与表结构兼容。
 - 生产 API 文档默认关闭；日志不得记录源码、密码、令牌、隐藏测试数据或内部沙箱路径。
 
 ## 备份恢复
