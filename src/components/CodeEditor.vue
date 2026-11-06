@@ -72,5 +72,5 @@ onBeforeUnmount(() => editor?.dispose())
 </template>
 
 <style scoped>
-.code-editor { width: 100%; height: 100%; min-height: 260px; background: #101d30; }
+.code-editor { width: 100%; height: 100%; min-height: 0; overflow: hidden; background: #101d30; }
 </style>
