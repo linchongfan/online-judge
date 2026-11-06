@@ -107,7 +107,13 @@ const storedConsoleHeight = Number(storageGet('xinbaoyan-console-height'))
 const consoleHeight = ref(storedConsoleHeight >= CONSOLE_MIN_HEIGHT ? storedConsoleHeight : CONSOLE_DEFAULT_HEIGHT)
 const consoleResizing = ref(false)
 const editorPane = ref<HTMLElement>()
+const consolePanel = ref<HTMLElement>()
 let consoleDragStart = { y: 0, height: CONSOLE_DEFAULT_HEIGHT }
+// During a drag the height is written straight to the DOM on animation
+// frames; the reactive value is committed once on release so Vue and Monaco
+// re-layout once instead of on every pointermove.
+let consoleFrame = 0
+let pendingConsoleHeight = consoleHeight.value
 
 function consoleMaxHeight(): number {
   const rect = editorPane.value?.getBoundingClientRect()
@@ -115,35 +121,58 @@ function consoleMaxHeight(): number {
   const available = rect ? rect.height - 48 - 55 - EDITOR_MIN_HEIGHT : CONSOLE_DEFAULT_HEIGHT
   return Math.max(CONSOLE_MIN_HEIGHT, available)
 }
+function clampConsoleHeight(value: number): number {
+  return Math.min(consoleMaxHeight(), Math.max(CONSOLE_MIN_HEIGHT, value))
+}
 function persistConsoleHeight() { storageSet('xinbaoyan-console-height', String(Math.round(consoleHeight.value))) }
+function toggleConsole() {
+  consoleOpen.value = !consoleOpen.value
+  // Drop any height left over from dragging so the collapsed class applies.
+  if (!consoleOpen.value) consolePanel.value?.style.removeProperty('height')
+}
 function startConsoleResize(event: PointerEvent) {
   if (window.innerWidth <= 760) return
   consoleResizing.value = true
   consoleDragStart = { y: event.clientY, height: consoleHeight.value }
+  pendingConsoleHeight = consoleHeight.value
+  // The 200ms height transition would fight the drag.
+  consolePanel.value?.style.setProperty('transition', 'none')
   ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
 }
 function resizeConsole(event: PointerEvent) {
   if (!consoleResizing.value) return
-  const next = consoleDragStart.height + (consoleDragStart.y - event.clientY)
-  consoleHeight.value = Math.min(consoleMaxHeight(), Math.max(CONSOLE_MIN_HEIGHT, next))
+  pendingConsoleHeight = clampConsoleHeight(consoleDragStart.height + (consoleDragStart.y - event.clientY))
+  if (consoleFrame) return
+  consoleFrame = requestAnimationFrame(() => {
+    consoleFrame = 0
+    if (consolePanel.value) consolePanel.value.style.height = `${pendingConsoleHeight}px`
+  })
 }
 function stopConsoleResize() {
   if (!consoleResizing.value) return
   consoleResizing.value = false
+  if (consoleFrame) {
+    cancelAnimationFrame(consoleFrame)
+    consoleFrame = 0
+  }
+  consoleHeight.value = pendingConsoleHeight
+  const panel = consolePanel.value
+  if (panel) {
+    panel.style.height = `${pendingConsoleHeight}px`
+    panel.style.removeProperty('transition')
+  }
   persistConsoleHeight()
 }
 function adjustConsoleHeight(delta: number) {
-  consoleHeight.value = Math.min(consoleMaxHeight(), Math.max(CONSOLE_MIN_HEIGHT, consoleHeight.value + delta))
+  consoleHeight.value = clampConsoleHeight(consoleHeight.value + delta)
   persistConsoleHeight()
 }
 function resetConsoleHeight() {
-  consoleHeight.value = Math.min(consoleMaxHeight(), CONSOLE_DEFAULT_HEIGHT)
+  consoleHeight.value = clampConsoleHeight(CONSOLE_DEFAULT_HEIGHT)
   persistConsoleHeight()
 }
-function clampConsoleHeight() {
-  const max = consoleMaxHeight()
-  if (consoleHeight.value > max) consoleHeight.value = max
-  else if (consoleHeight.value < CONSOLE_MIN_HEIGHT) consoleHeight.value = CONSOLE_MIN_HEIGHT
+function clampConsoleToViewport() {
+  consoleHeight.value = clampConsoleHeight(consoleHeight.value)
 }
 
 function templateFor(item: Problem, lang: Language) {
@@ -312,11 +341,11 @@ watch(() => polling.error.value, (error) => {
 onMounted(() => {
   void loadWorkspace()
   void listProblems({ page: 1, pageSize: 100 }).then(data => { globalProblemIds.value = data.items.map(item => item.id) }).catch(() => {})
-  window.addEventListener('resize', clampConsoleHeight)
-  void nextTick(clampConsoleHeight)
+  window.addEventListener('resize', clampConsoleToViewport)
+  void nextTick(clampConsoleToViewport)
 })
 onBeforeUnmount(() => {
-  window.removeEventListener('resize', clampConsoleHeight)
+  window.removeEventListener('resize', clampConsoleToViewport)
   polling.stop()
   if (saveTimer) clearTimeout(saveTimer)
   if (problem.value.id) storageSet(draftKey(), code.value)
@@ -402,10 +431,10 @@ onBeforeUnmount(() => {
         </div>
         <div class="monaco-wrap"><CodeEditor v-model="code" :language="language" /></div>
         <div v-if="consoleOpen" class="console-resizer" role="separator" aria-label="调整编辑器与结果面板高度" aria-orientation="horizontal" :aria-valuenow="Math.round(consoleHeight)" :aria-valuemin="96" :aria-valuemax="Math.round(consoleMaxHeight())" tabindex="0" title="上下拖动调整高度，双击恢复默认" @pointerdown="startConsoleResize" @pointermove="resizeConsole" @pointerup="stopConsoleResize" @pointercancel="stopConsoleResize" @keydown.up.prevent="adjustConsoleHeight(20)" @keydown.down.prevent="adjustConsoleHeight(-20)" @dblclick="resetConsoleHeight"><span /></div>
-        <div class="console-panel" :class="{ collapsed: !consoleOpen }" :style="consoleOpen ? { height: `${consoleHeight}px` } : undefined">
+        <div class="console-panel" ref="consolePanel" :class="{ collapsed: !consoleOpen }" :style="consoleOpen ? { height: `${consoleHeight}px` } : undefined">
           <div class="console-header">
             <div><button :class="{ active: consoleTab === 'run' }" @click="consoleTab = 'run'; consoleOpen = true">运行结果</button><button :class="{ active: consoleTab === 'result' }" @click="consoleTab = 'result'; consoleOpen = true">判题结果<span v-if="judging === 'done'" class="result-dot" :class="finalStatus.toLowerCase()" /></button></div>
-            <button class="console-toggle" :aria-expanded="consoleOpen" aria-label="折叠或展开结果面板" @click="consoleOpen = !consoleOpen"><el-icon><ArrowDown v-if="consoleOpen" /><ArrowUp v-else /></el-icon></button>
+            <button class="console-toggle" :aria-expanded="consoleOpen" aria-label="折叠或展开结果面板" @click="toggleConsole"><el-icon><ArrowDown v-if="consoleOpen" /><ArrowUp v-else /></el-icon></button>
           </div>
           <div v-show="consoleOpen" class="console-content">
             <template v-if="consoleTab === 'run'">
