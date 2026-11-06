@@ -26,7 +26,7 @@ const passwordForm = reactive({ currentPassword: '', newPassword: '', confirmPas
 const stats = ref<UserStats | null>(null)
 const recentList = ref<Submission[]>([])
 const contestRecords = ref<Array<UserContestRecord & { contest?: Contest }>>([])
-const languageLabels: Record<Language, string> = { cpp: 'C++11', c: 'C99', java: 'JDK 8', python: 'Python 3.8.6' }
+const languageLabels: Record<Language, string> = { cpp: 'C++11', c: 'C99', java: 'JDK 8', python: 'Python 3.12' }
 
 const profile = computed(() => session.profile)
 const progressGroups = computed(() => (stats.value?.difficultyProgress ?? []).map(group => ({
