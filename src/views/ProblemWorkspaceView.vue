@@ -99,6 +99,53 @@ function stopResize() { if (resizing.value) { resizing.value = false; persistPan
 function adjustPaneWidth(delta: number) { leftPaneWidth.value = Math.min(70, Math.max(28, leftPaneWidth.value + delta)); persistPaneWidth() }
 function resetPaneWidth() { leftPaneWidth.value = 45; persistPaneWidth() }
 
+// Vertical split between the editor and the run/judge result panel.
+const CONSOLE_DEFAULT_HEIGHT = 220
+const CONSOLE_MIN_HEIGHT = 96
+const EDITOR_MIN_HEIGHT = 150
+const storedConsoleHeight = Number(storageGet('xinbaoyan-console-height'))
+const consoleHeight = ref(storedConsoleHeight >= CONSOLE_MIN_HEIGHT ? storedConsoleHeight : CONSOLE_DEFAULT_HEIGHT)
+const consoleResizing = ref(false)
+const editorPane = ref<HTMLElement>()
+let consoleDragStart = { y: 0, height: CONSOLE_DEFAULT_HEIGHT }
+
+function consoleMaxHeight(): number {
+  const rect = editorPane.value?.getBoundingClientRect()
+  // Toolbar (48px) + footer (55px) + a usable editor area stay reserved.
+  const available = rect ? rect.height - 48 - 55 - EDITOR_MIN_HEIGHT : CONSOLE_DEFAULT_HEIGHT
+  return Math.max(CONSOLE_MIN_HEIGHT, available)
+}
+function persistConsoleHeight() { storageSet('xinbaoyan-console-height', String(Math.round(consoleHeight.value))) }
+function startConsoleResize(event: PointerEvent) {
+  if (window.innerWidth <= 760) return
+  consoleResizing.value = true
+  consoleDragStart = { y: event.clientY, height: consoleHeight.value }
+  ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
+}
+function resizeConsole(event: PointerEvent) {
+  if (!consoleResizing.value) return
+  const next = consoleDragStart.height + (consoleDragStart.y - event.clientY)
+  consoleHeight.value = Math.min(consoleMaxHeight(), Math.max(CONSOLE_MIN_HEIGHT, next))
+}
+function stopConsoleResize() {
+  if (!consoleResizing.value) return
+  consoleResizing.value = false
+  persistConsoleHeight()
+}
+function adjustConsoleHeight(delta: number) {
+  consoleHeight.value = Math.min(consoleMaxHeight(), Math.max(CONSOLE_MIN_HEIGHT, consoleHeight.value + delta))
+  persistConsoleHeight()
+}
+function resetConsoleHeight() {
+  consoleHeight.value = Math.min(consoleMaxHeight(), CONSOLE_DEFAULT_HEIGHT)
+  persistConsoleHeight()
+}
+function clampConsoleHeight() {
+  const max = consoleMaxHeight()
+  if (consoleHeight.value > max) consoleHeight.value = max
+  else if (consoleHeight.value < CONSOLE_MIN_HEIGHT) consoleHeight.value = CONSOLE_MIN_HEIGHT
+}
+
 function templateFor(item: Problem, lang: Language) {
   const templates: Record<Language, string> = {
     cpp: `#include <iostream>\nusing namespace std;\n\n// ${item.title}\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n\n    // 在这里编写你的解法\n    \n    return 0;\n}`,
@@ -265,8 +312,11 @@ watch(() => polling.error.value, (error) => {
 onMounted(() => {
   void loadWorkspace()
   void listProblems({ page: 1, pageSize: 100 }).then(data => { globalProblemIds.value = data.items.map(item => item.id) }).catch(() => {})
+  window.addEventListener('resize', clampConsoleHeight)
+  void nextTick(clampConsoleHeight)
 })
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', clampConsoleHeight)
   polling.stop()
   if (saveTimer) clearTimeout(saveTimer)
   if (problem.value.id) storageSet(draftKey(), code.value)
@@ -342,7 +392,7 @@ onBeforeUnmount(() => {
       </section>
 
       <div class="pane-resizer" role="separator" aria-label="调整题面与编辑器宽度" aria-orientation="vertical" :aria-valuenow="Math.round(leftPaneWidth)" aria-valuemin="28" aria-valuemax="70" tabindex="0" title="拖动调整宽度，双击恢复默认" @pointerdown="startResize" @pointermove="resizePane" @pointerup="stopResize" @pointercancel="stopResize" @keydown.left.prevent="adjustPaneWidth(-2)" @keydown.right.prevent="adjustPaneWidth(2)" @dblclick="resetPaneWidth"><span /></div>
-      <section class="editor-pane">
+      <section ref="editorPane" class="editor-pane" :class="{ 'console-resizing': consoleResizing }">
         <div class="editor-toolbar">
           <el-select :model-value="language" size="small" @change="changeLanguage">
             <el-option v-for="(label, key) in languageLabels" :key="key" :label="label" :value="key" />
@@ -351,7 +401,8 @@ onBeforeUnmount(() => {
           <div class="editor-actions"><span class="save-state"><el-icon><CircleCheck /></el-icon>{{ !storageReady ? '本地存储不可用' : saved ? '已保存到本机' : '正在保存…' }}</span><el-button text size="small" @click="resetCode"><el-icon><RefreshLeft /></el-icon>重置</el-button></div>
         </div>
         <div class="monaco-wrap"><CodeEditor v-model="code" :language="language" /></div>
-        <div class="console-panel" :class="{ collapsed: !consoleOpen }">
+        <div v-if="consoleOpen" class="console-resizer" role="separator" aria-label="调整编辑器与结果面板高度" aria-orientation="horizontal" :aria-valuenow="Math.round(consoleHeight)" :aria-valuemin="96" :aria-valuemax="Math.round(consoleMaxHeight())" tabindex="0" title="上下拖动调整高度，双击恢复默认" @pointerdown="startConsoleResize" @pointermove="resizeConsole" @pointerup="stopConsoleResize" @pointercancel="stopConsoleResize" @keydown.up.prevent="adjustConsoleHeight(20)" @keydown.down.prevent="adjustConsoleHeight(-20)" @dblclick="resetConsoleHeight"><span /></div>
+        <div class="console-panel" :class="{ collapsed: !consoleOpen }" :style="consoleOpen ? { height: `${consoleHeight}px` } : undefined">
           <div class="console-header">
             <div><button :class="{ active: consoleTab === 'run' }" @click="consoleTab = 'run'; consoleOpen = true">运行结果</button><button :class="{ active: consoleTab === 'result' }" @click="consoleTab = 'result'; consoleOpen = true">判题结果<span v-if="judging === 'done'" class="result-dot" :class="finalStatus.toLowerCase()" /></button></div>
             <button class="console-toggle" :aria-expanded="consoleOpen" aria-label="折叠或展开结果面板" @click="consoleOpen = !consoleOpen"><el-icon><ArrowDown v-if="consoleOpen" /><ArrowUp v-else /></el-icon></button>
@@ -437,6 +488,11 @@ onBeforeUnmount(() => {
 .editor-pane { flex: 1; min-width: 0; display: flex; flex-direction: column; background: #101d30; min-height: 0; overflow: hidden; }
 .editor-toolbar { height: 48px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 14px; background: #162a43; border-bottom: 1px solid #29415e; }.editor-toolbar .el-select { width: 115px; }.editor-toolbar :deep(.el-select__wrapper) { background: #2b2e3c; box-shadow: 0 0 0 1px #3a3d4c inset; color: #d8dbea; }.editor-toolbar :deep(.el-select__selected-item), .editor-toolbar :deep(.el-select__placeholder) { color: #d8dbea; font-size: 11px; }.editor-file { color: #797f98; font-size: 10px; }.editor-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }.save-state { display: flex; align-items: center; gap: 4px; color: #6f768e; font-size: 9px; }.editor-actions .el-button { color: #9399b0; }
 .monaco-wrap { flex: 1; min-height: 180px; overflow: hidden; }
+.console-resizer { flex: none; height: 8px; display: grid; place-items: center; cursor: row-resize; touch-action: none; background: #162a43; border-top: 1px solid #29415e; }
+.console-resizer > span { width: 34px; height: 0; border-top: 2px dotted #55708f; }
+.console-resizer:hover, .console-resizer:focus-visible, .editor-pane.console-resizing .console-resizer { background: #1d3350; }
+.console-resizer:hover > span, .console-resizer:focus-visible > span, .editor-pane.console-resizing .console-resizer > span { border-color: #8fb8ff; }
+.editor-pane.console-resizing .monaco-wrap, .editor-pane.console-resizing .console-panel { pointer-events: none; }
 .console-panel { flex: none; height: clamp(200px, 24vh, 270px); background: #12243b; border-top: 1px solid #29415e; transition: height .2s; }.console-panel.collapsed { height: 39px; }.console-header { height: 39px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; }.console-header > div { display: flex; height: 100%; gap: 20px; }.console-header button { border: 0; background: none; color: #7f859c; font-size: 10px; cursor: pointer; position: relative; }.console-header button.active { color: #d9dced; }.console-header button.active::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: #9184ef; }.console-toggle { display: grid; place-items: center; width: 25px; height: 25px; }.result-dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--success); margin-left: 5px; }.result-dot.wa { background: var(--danger); }
 .console-content { height: calc(100% - 39px); overflow-y: auto; padding: 8px 17px 12px; color: #c7cbda; }.console-loading, .console-placeholder { height: 100%; display: flex; align-items: center; justify-content: center; gap: 9px; color: #858ba2; font-size: 11px; }.console-loading .el-icon { color: #a597ff; font-size: 18px; }.run-success { display: flex; align-items: center; gap: 7px; margin: 3px 0 9px; }.run-success .el-icon { color: #60c49f; }.run-success strong { font-size: 11px; color: #a7dbc8; }.run-success span { margin-left: auto; color: #6f758b; font-size: 9px; }.testcase-row { display: grid; grid-template-columns: 80px 1fr 35px 45px; gap: 8px; align-items: center; padding: 7px 10px; border-radius: 5px; background: #1b304b; margin-top: 5px; font-size: 10px; }.testcase-row > span { display: flex; align-items: center; gap: 6px; color: #a9aec0; }.testcase-row i { width: 4px; height: 4px; border-radius: 50%; background: #57bd98; }.testcase-row pre { margin: 0; color: #8e95ab; font: 9px 'JetBrains Mono', monospace; white-space: pre-wrap; }.testcase-row strong { color: #61c29e; font-size: 9px; }.testcase-row small { color: #6f7589; text-align: right; font-size: 9px; }
 .run-result.failed .run-success strong, .run-result.failed .testcase-row strong { color: #ef9aa3; }
@@ -444,8 +500,6 @@ onBeforeUnmount(() => {
 .judging-progress { padding-top: 20px; }.judging-line { display: flex; align-items: center; gap: 12px; }.judging-line > .el-icon { font-size: 25px; color: #a99cf8; }.judging-line > div { display: flex; flex-direction: column; gap: 6px; }.judging-line strong { font-size: 12px; }.judging-line span { color: #7f8599; font-size: 9px; }.judging-line > .judge-status { margin-left: auto; }.judging-progress .el-progress { margin-top: 20px; }
 .result-summary { display: flex; align-items: center; gap: 10px; }.result-icon { font-size: 29px; color: #5cc39c; }.wrong .result-icon { color: #e87982; }.result-summary > div:nth-child(2) { display: flex; flex-direction: column; gap: 5px; }.result-summary > div:nth-child(2) > span { color: #81879b; font-size: 9px; }.result-metrics { display: flex; gap: 25px; margin-left: auto; }.result-metrics > span { display: flex; flex-direction: column; gap: 5px; }.result-metrics small { color: #777e93; font-size: 9px; }.result-metrics strong { font-size: 12px; }.final-result > p { display: flex; align-items: center; gap: 5px; background: #342a35; color: #c3939a; font-size: 9px; padding: 8px 10px; border-radius: 5px; margin: 12px 0 0; }
 .editor-footer { min-height: 55px; flex: none; background: #162a43; border-top: 1px solid #29415e; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 15px; }.editor-footer > span { display: flex; align-items: center; gap: 5px; color: #70768c; font-size: 9px; }.editor-footer > div { display: flex; gap: 8px; }.editor-footer .el-button { font-size: 11px; }.editor-footer .el-button:not(.el-button--primary) { background: #303341; color: #c2c6d5; border-color: #3d4050; }
-@media (max-height: 760px) { .console-panel { height: 170px; }.console-panel.collapsed { height: 39px; } }
-@media (max-height: 640px) { .console-panel { height: 140px; }.console-panel.collapsed { height: 39px; } }
 @media (max-width: 1000px) { .workspace-topbar > .prototype-note { display: none; }.problem-pane { min-width: 0; }.description-scroll { padding: 20px; }.run-success span { display: none; }.save-state { display: none; }.editor-footer > span { display: none; }.editor-footer { justify-content: flex-end; } }
-@media (max-width: 760px) { .workspace-shell { height: auto; min-height: calc(100vh - 120px); }.workspace-topbar { padding: 0 12px; }.workspace-breadcrumb :deep(.difficulty), .contest-label, .problem-switcher { display: none; }.workspace-body { flex-direction: column; }.pane-resizer { display: none; }.problem-pane { width: 100%; min-width: 0; border-right: 0; max-height: none; }.description-scroll { overflow: visible; padding: 22px 18px; }.editor-pane { min-height: 690px; }.monaco-wrap { min-height: 400px; }.console-panel { height: 230px; }.editor-footer { position: sticky; bottom: 0; z-index: 10; }.problem-heading h1 { font-size: 22px; } }
+@media (max-width: 760px) { .workspace-shell { height: auto; min-height: calc(100vh - 120px); }.workspace-topbar { padding: 0 12px; }.workspace-breadcrumb :deep(.difficulty), .contest-label, .problem-switcher { display: none; }.workspace-body { flex-direction: column; }.pane-resizer { display: none; }.problem-pane { width: 100%; min-width: 0; border-right: 0; max-height: none; }.description-scroll { overflow: visible; padding: 22px 18px; }.editor-pane { min-height: 690px; }.monaco-wrap { min-height: 400px; }.console-panel { height: 230px; }.editor-footer { position: sticky; bottom: 0; z-index: 10; }.problem-heading h1 { font-size: 22px; }.console-resizer { display: none; } }
 </style>
