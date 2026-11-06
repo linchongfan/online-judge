@@ -11,7 +11,7 @@ import { getContest } from '../api/contests'
 import { ApiError } from '../api/client'
 import { session } from '../stores/session'
 import { useSubmissionPolling } from '../composables/useSubmissionPolling'
-import { formatDateTime, formatMemoryKb, formatRuntimeMs, judgeStatusMap } from '../utils/format'
+import { createIdempotencyKey, formatDateTime, formatMemoryKb, formatRuntimeMs, judgeStatusMap } from '../utils/format'
 import type { Contest, JudgeStatus, Language, Problem, Solution, Submission } from '../types'
 
 const route = useRoute()
@@ -148,7 +148,7 @@ async function runSample() {
   consoleTab.value = 'run'
   running.value = true
   try {
-    const accepted = await runProblemSample(problem.value.id, { language: language.value, source: code.value, contestId: contest.value?.id, idempotencyKey: crypto.randomUUID() })
+    const accepted = await runProblemSample(problem.value.id, { language: language.value, source: code.value, contestId: contest.value?.id, idempotencyKey: createIdempotencyKey() })
     newSubmission('sample', accepted)
   } catch (error) {
     running.value = false
@@ -163,7 +163,7 @@ async function submitCode() {
   consoleTab.value = 'result'
   judging.value = 'PENDING'
   try {
-    const accepted = await createSubmission({ problemId: problem.value.id, contestId: contest.value?.id, language: language.value, source: code.value, idempotencyKey: crypto.randomUUID() })
+    const accepted = await createSubmission({ problemId: problem.value.id, contestId: contest.value?.id, language: language.value, source: code.value, idempotencyKey: createIdempotencyKey() })
     newSubmission('submit', accepted)
   } catch (error) {
     judging.value = 'idle'
