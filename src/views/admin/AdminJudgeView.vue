@@ -238,7 +238,7 @@ onUnmounted(() => loadController?.abort())
           <el-table-column label="尝试" width="70" align="right"><template #default="{ row }">#{{ row.attempt }}</template></el-table-column>
           <el-table-column label="结果" width="110"><template #default="{ row }"><StatusTag :status="row.judgeStatus" compact /></template></el-table-column>
           <el-table-column label="发生时间" width="180"><template #default="{ row }"><span class="mono muted">{{ formatDateTime(row.finishedAt || row.createdAt) }}</span></template></el-table-column>
-          <el-table-column label="操作" width="95" fixed="right"><template #default="{ row }"><el-button text type="primary" @click="openSingleRejudge(row)"><el-icon><RefreshRight /></el-icon>重判</el-button></template></el-table-column>
+          <el-table-column label="操作" width="112" fixed="right"><template #default="{ row }"><el-button text type="primary" @click="openSingleRejudge(row)"><el-icon><RefreshRight /></el-icon>重判</el-button></template></el-table-column>
           <template #empty><div class="empty-state"><div class="empty-icon"><el-icon :size="26"><CircleCheck /></el-icon></div><h3>暂无异常任务</h3><p>当前没有 SE 状态的判题任务。</p></div></template>
         </el-table>
       </div>

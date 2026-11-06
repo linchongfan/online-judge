@@ -44,8 +44,9 @@ const navItems = [
 <style scoped>
 .admin-layout { min-height: 100vh; background: var(--page); }
 .admin-sidebar { position: fixed; inset: 0 auto 0 0; width: 240px; background: #102f5f; color: #fff; display: flex; flex-direction: column; z-index: 30; border-right: 1px solid #234672; }
-.admin-brand { min-height: 92px; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid rgba(197, 218, 246, .13); }
+.admin-brand { min-width: 0; min-height: 92px; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid rgba(197, 218, 246, .13); }
 .admin-brand :deep(.brand) { gap: 9px; min-width: 0; }
+.admin-brand :deep(.brand-type) { min-width: 0; line-height: 1.25; }
 .admin-brand :deep(.brand-mark) { width: 40px; height: 40px; border-radius: 8px; box-shadow: 0 0 0 1px rgba(255,255,255,.14); }
 .admin-brand :deep(.brand-mark img) { width: 38px; height: 36px; }
 .admin-brand :deep(.brand-type strong) { font-size: 21px; letter-spacing: .5px; }
@@ -67,9 +68,10 @@ const navItems = [
 .admin-user strong { color: #f4f8ff; font-size: 12px; font-weight: 600; }
 .admin-user span:not(.avatar) { font-size: 10px; color: #91a9ca; }
 .admin-content { margin-left: 240px; min-height: 100vh; }
-.admin-topbar { height: 92px; padding: 0 32px; background: #fff; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-.admin-breadcrumb { color: var(--text-secondary); font-size: 11px; }
-.admin-topbar h1 { margin: 7px 0 0; color: var(--text-strong); font-size: 21px; font-weight: 700; letter-spacing: -.4px; }
+.admin-topbar { min-height: 92px; height: auto; padding: 14px 32px; background: #fff; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.admin-topbar > div:first-child { min-width: 0; }
+.admin-breadcrumb { display: block; color: var(--text-secondary); font-size: 11px; line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.admin-topbar h1 { margin: 6px 0 0; color: var(--text-strong); font-size: 21px; font-weight: 700; letter-spacing: -.4px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .topbar-right { display: flex; align-items: center; gap: 20px; }
 .system-normal { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); }
 .system-normal i { width: 7px; height: 7px; background: var(--success); border-radius: 50%; box-shadow: 0 0 0 4px #e9f7f1; }
@@ -99,7 +101,7 @@ const navItems = [
   .admin-brand :deep(.brand-mark) { width: 38px; height: 38px; }
   .admin-nav { padding: 20px 6px; }
   .admin-content { margin-left: 60px; }
-  .admin-topbar { height: 82px; padding: 0 16px; }
+  .admin-topbar { min-height: 82px; height: auto; padding: 12px 16px; }
   .admin-topbar h1 { font-size: 18px; }
   .admin-breadcrumb { font-size: 10px; }
   .admin-main { padding: 18px 12px 32px; }
