@@ -4,6 +4,8 @@ export type JudgeStatus = 'PENDING' | 'JUDGING' | 'AC' | 'WA' | 'TLE' | 'MLE' | 
 export type ContestStatus = 'ongoing' | 'upcoming' | 'ended'
 export type ContestPublicationStatus = 'draft' | 'published' | 'cancelled' | 'archived'
 export type ProblemStatus = 'draft' | 'published' | 'archived'
+export type StudyPlanStatus = 'draft' | 'published' | 'archived'
+export type StudyPlanAccent = 'blue' | 'green' | 'purple' | 'orange' | 'rose' | 'teal'
 export type Language = 'cpp' | 'c' | 'java' | 'python'
 export type UserRole = 'user' | 'admin'
 export type UserStatus = 'active' | 'disabled'
@@ -414,6 +416,76 @@ export interface AdminContestParticipant {
   username: string
   nickname: string
   registeredAt: string
+}
+
+export interface StudyPlanSummary {
+  id: number
+  title: string
+  subtitle: string
+  accent: string
+  problemCount: number
+  solvedCount: number
+  enrolled: boolean
+  completed: boolean
+}
+
+export interface StudyPlanProblemEntry {
+  problemId: number
+  title: string
+  difficulty: Difficulty
+  tags: string[]
+  position: number
+  groupName: string | null
+  progress: ProblemProgress
+}
+
+export interface StudyPlanDetail extends StudyPlanSummary {
+  description: string
+  problems: StudyPlanProblemEntry[]
+}
+
+export interface AdminStudyPlanSummary {
+  id: number
+  title: string
+  subtitle: string
+  accent: string
+  status: StudyPlanStatus
+  problemCount: number
+  enrolledCount: number
+  updatedAt: string
+}
+
+export interface AdminStudyPlanProblem {
+  problemId: number
+  title: string
+  difficulty: Difficulty
+  problemStatus: ProblemStatus
+  position: number
+  groupName: string | null
+}
+
+export interface AdminStudyPlanDetail {
+  id: number
+  title: string
+  subtitle: string
+  description: string
+  accent: string
+  status: StudyPlanStatus
+  problems: AdminStudyPlanProblem[]
+}
+
+export interface StudyPlanProblemInput {
+  problemId: number
+  position: number
+  groupName: string | null
+}
+
+export interface AdminStudyPlanWrite {
+  title: string
+  subtitle: string
+  description: string
+  accent: StudyPlanAccent
+  problems: StudyPlanProblemInput[]
 }
 
 export interface AdminAbnormalJudgeTask {

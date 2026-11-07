@@ -8,11 +8,12 @@ import StatusTag from '../components/StatusTag.vue'
 import { getProblem, getProblemSolution, listProblems, runProblemSample } from '../api/problems'
 import { createSubmission, listSubmissions } from '../api/submissions'
 import { getContest } from '../api/contests'
+import { getStudyPlan } from '../api/studyPlans'
 import { ApiError } from '../api/client'
 import { session } from '../stores/session'
 import { useSubmissionPolling } from '../composables/useSubmissionPolling'
 import { createIdempotencyKey, formatDateTime, formatMemoryKb, formatRuntimeMs, judgeStatusMap } from '../utils/format'
-import type { Contest, JudgeStatus, Language, Problem, Solution, Submission } from '../types'
+import type { Contest, JudgeStatus, Language, Problem, Solution, StudyPlanDetail, Submission } from '../types'
 
 const route = useRoute()
 const router = useRouter()
@@ -50,8 +51,13 @@ const solution = ref<Solution | null>(null)
 const solutionError = ref('')
 const problemSubmissions = ref<Submission[]>([])
 const contest = ref<Contest | null>(null)
+const plan = ref<StudyPlanDetail | null>(null)
 const globalProblemIds = ref<number[]>([])
-const problemIds = computed(() => contest.value ? contest.value.problems.map(item => item.problemId) : globalProblemIds.value)
+const problemIds = computed(() => {
+  if (contest.value) return contest.value.problems.map(item => item.problemId)
+  if (plan.value) return plan.value.problems.map(item => item.problemId)
+  return globalProblemIds.value
+})
 const currentSubmission = ref<Submission | null>(null)
 const activeSubmissionId = ref<string | null>(null)
 const operation = ref<'sample' | 'submit'>('submit')
@@ -266,7 +272,10 @@ function changeLeftTab(tab: string) {
 function goToProblem(offset: number) {
   if (!problemIds.value.length || problemIndex.value < 0) return
   const next = problemIds.value[(problemIndex.value + offset + problemIds.value.length) % problemIds.value.length]
-  void router.push({ path: `/problems/${next}`, query: contest.value ? { contest: contest.value.id } : {} })
+  const query: Record<string, number> = {}
+  if (contest.value) query.contest = contest.value.id
+  else if (plan.value) query.plan = plan.value.id
+  void router.push({ path: `/problems/${next}`, query })
 }
 function showHistoryResult(item: Submission) {
   currentSubmission.value = item
@@ -303,16 +312,24 @@ async function loadWorkspace() {
   solutionError.value = ''
   try {
     const contestId = route.query.contest ? Number(route.query.contest) : undefined
+    const planId = route.query.plan ? Number(route.query.plan) : undefined
     // Contest context is best-effort: cancelled/archived contests fall back to
     // practice mode, and only ongoing contests keep submission context.
     let contestData: Contest | null = null
     if (contestId) {
       try { contestData = await getContest(contestId) } catch { contestData = null }
     }
+    let planData: StudyPlanDetail | null = null
+    if (!contestData && planId) {
+      try { planData = await getStudyPlan(planId) } catch { planData = null }
+    }
     const problemData = await getProblem(Number(route.params.id), contestData ? contestId : undefined)
     if (generation !== loadGeneration) return
     problem.value = problemData
     contest.value = contestData && contestData.status === 'ongoing' ? contestData : null
+    plan.value = !contest.value && planData && planData.problems.some(item => item.problemId === problemData.id)
+      ? planData
+      : null
     loadDraft()
     void loadProblemSubmissions()
     if (activeLeftTab.value === 'solution') void loadSolution()
@@ -328,7 +345,7 @@ watch(code, () => {
   if (saveTimer) clearTimeout(saveTimer)
   saveTimer = setTimeout(() => { if (storageSet(draftKey(), code.value)) saved.value = true }, 500)
 })
-watch(() => [route.params.id, route.query.contest], loadWorkspace)
+watch(() => [route.params.id, route.query.contest, route.query.plan], loadWorkspace)
 watch(() => polling.error.value, (error) => {
   if (!error) return
   // Permanent polling failure (network/auth/not-found): release the UI so the
@@ -356,8 +373,9 @@ onBeforeUnmount(() => {
   <div class="workspace-shell" v-loading="loading">
     <div class="workspace-topbar">
       <div class="workspace-breadcrumb">
-        <button class="back-button" aria-label="返回" @click="contest ? router.push(`/contests/${contest.id}`) : router.push('/problems')"><el-icon><ArrowLeft /></el-icon></button>
-        <span v-if="contest" class="contest-label">{{ contest.title }}<i>/</i></span>
+        <button class="back-button" aria-label="返回" @click="contest ? router.push(`/contests/${contest.id}`) : plan ? router.push(`/plans/${plan.id}`) : router.push('/problems')"><el-icon><ArrowLeft /></el-icon></button>
+        <span v-if="contest" class="context-label">{{ contest.title }}<i>/</i></span>
+        <span v-else-if="plan" class="context-label">{{ plan.title }}<i>/</i></span>
         <strong>{{ problem.id }}. {{ problem.title }}</strong><DifficultyTag :difficulty="problem.difficulty" />
       </div>
       <div class="problem-switcher"><el-button text :icon="'ArrowLeft'" aria-label="上一题" @click="goToProblem(-1)" /><span>{{ problemIndex + 1 }} / {{ problemIds.length }}</span><el-button text :icon="'ArrowRight'" aria-label="下一题" @click="goToProblem(1)" /></div>
@@ -458,7 +476,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .workspace-shell { height: 100%; min-height: 0; overflow: hidden; display: flex; flex-direction: column; background: #fff; }
 .workspace-topbar { height: 53px; flex: none; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 max(var(--content-gutter), calc((100vw - var(--content-max)) / 2 + var(--content-gutter))); gap: 16px; background: #fff; }
-.workspace-breadcrumb { display: flex; align-items: center; gap: 10px; min-width: 0; }.workspace-breadcrumb strong { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }.back-button { width: 28px; height: 28px; border: 0; border-radius: 6px; background: var(--surface-soft); color: var(--text-secondary); cursor: pointer; display: grid; place-items: center; }.back-button:hover { color: var(--primary); background: var(--primary-soft); }.contest-label { font-size: 11px; color: var(--text-tertiary); }.contest-label i { font-style: normal; margin-left: 8px; }
+.workspace-breadcrumb { display: flex; align-items: center; gap: 10px; min-width: 0; }.workspace-breadcrumb strong { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }.back-button { width: 28px; height: 28px; border: 0; border-radius: 6px; background: var(--surface-soft); color: var(--text-secondary); cursor: pointer; display: grid; place-items: center; }.back-button:hover { color: var(--primary); background: var(--primary-soft); }.context-label { font-size: 11px; color: var(--text-tertiary); }.context-label i { font-style: normal; margin-left: 8px; }
 .problem-switcher { display: flex; align-items: center; gap: 2px; margin-left: auto; color: var(--text-tertiary); font-size: 10px; }.problem-switcher .el-button { padding: 5px; }.workspace-topbar > .prototype-note { margin-left: 8px; }
 .workspace-body { display: flex; flex: 1; min-height: 0; }
 .workspace-body.resizing { cursor: col-resize; user-select: none; }
@@ -530,5 +548,5 @@ onBeforeUnmount(() => {
 .result-summary { display: flex; align-items: center; gap: 10px; }.result-icon { font-size: 29px; color: #5cc39c; }.wrong .result-icon { color: #e87982; }.result-summary > div:nth-child(2) { display: flex; flex-direction: column; gap: 5px; }.result-summary > div:nth-child(2) > span { color: #81879b; font-size: 9px; }.result-metrics { display: flex; gap: 25px; margin-left: auto; }.result-metrics > span { display: flex; flex-direction: column; gap: 5px; }.result-metrics small { color: #777e93; font-size: 9px; }.result-metrics strong { font-size: 12px; }.final-result > p { display: flex; align-items: center; gap: 5px; background: #342a35; color: #c3939a; font-size: 9px; padding: 8px 10px; border-radius: 5px; margin: 12px 0 0; }
 .editor-footer { min-height: 55px; flex: none; background: #162a43; border-top: 1px solid #29415e; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 15px; }.editor-footer > span { display: flex; align-items: center; gap: 5px; color: #70768c; font-size: 9px; }.editor-footer > div { display: flex; gap: 8px; }.editor-footer .el-button { font-size: 11px; }.editor-footer .el-button:not(.el-button--primary) { background: #303341; color: #c2c6d5; border-color: #3d4050; }
 @media (max-width: 1000px) { .workspace-topbar > .prototype-note { display: none; }.problem-pane { min-width: 0; }.description-scroll { padding: 20px; }.run-success span { display: none; }.save-state { display: none; }.editor-footer > span { display: none; }.editor-footer { justify-content: flex-end; } }
-@media (max-width: 760px) { .workspace-shell { height: auto; min-height: calc(100vh - 120px); }.workspace-topbar { padding: 0 12px; }.workspace-breadcrumb :deep(.difficulty), .contest-label, .problem-switcher { display: none; }.workspace-body { flex-direction: column; }.pane-resizer { display: none; }.problem-pane { width: 100%; min-width: 0; border-right: 0; max-height: none; }.description-scroll { overflow: visible; padding: 22px 18px; }.editor-pane { min-height: 690px; }.monaco-wrap { min-height: 400px; }.console-panel { height: 230px; }.editor-footer { position: sticky; bottom: 0; z-index: 10; }.problem-heading h1 { font-size: 22px; }.console-resizer { display: none; } }
+@media (max-width: 760px) { .workspace-shell { height: auto; min-height: calc(100vh - 120px); }.workspace-topbar { padding: 0 12px; }.workspace-breadcrumb :deep(.difficulty), .context-label, .problem-switcher { display: none; }.workspace-body { flex-direction: column; }.pane-resizer { display: none; }.problem-pane { width: 100%; min-width: 0; border-right: 0; max-height: none; }.description-scroll { overflow: visible; padding: 22px 18px; }.editor-pane { min-height: 690px; }.monaco-wrap { min-height: 400px; }.console-panel { height: 230px; }.editor-footer { position: sticky; bottom: 0; z-index: 10; }.problem-heading h1 { font-size: 22px; }.console-resizer { display: none; } }
 </style>

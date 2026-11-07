@@ -96,6 +96,12 @@ class RegistrationStatus(StrEnum):
     CANCELLED = "cancelled"
 
 
+class StudyPlanStatus(StrEnum):
+    DRAFT = "draft"
+    PUBLISHED = "published"
+    ARCHIVED = "archived"
+
+
 class WorkerStatus(StrEnum):
     ONLINE = "online"
     BUSY = "busy"
@@ -302,6 +308,51 @@ class ContestRegistration(Base):
     status: Mapped[RegistrationStatus] = mapped_column(
         Enum(RegistrationStatus, native_enum=False), default=RegistrationStatus.REGISTERED
     )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+
+class StudyPlan(Base, TimestampMixin):
+    __tablename__ = "study_plan"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(120), index=True)
+    subtitle: Mapped[str] = mapped_column(String(255), default="")
+    description: Mapped[str] = mapped_column(Text, default="")
+    accent: Mapped[str] = mapped_column(String(20), default="blue")
+    status: Mapped[StudyPlanStatus] = mapped_column(
+        Enum(StudyPlanStatus, native_enum=False), default=StudyPlanStatus.DRAFT, index=True
+    )
+    created_by: Mapped[int | None] = mapped_column(ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+
+    problems: Mapped[list["StudyPlanProblem"]] = relationship(
+        cascade="all, delete-orphan", lazy="selectin", order_by="StudyPlanProblem.position"
+    )
+
+
+class StudyPlanProblem(Base):
+    __tablename__ = "study_plan_problem"
+    __table_args__ = (
+        UniqueConstraint("plan_id", "problem_id", name="uq_study_plan_problem"),
+        Index("ix_study_plan_problem_order", "plan_id", "position"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    plan_id: Mapped[int] = mapped_column(ForeignKey("study_plan.id", ondelete="CASCADE"), index=True)
+    problem_id: Mapped[int] = mapped_column(ForeignKey("problem.id", ondelete="RESTRICT"), index=True)
+    position: Mapped[int] = mapped_column(Integer)
+    group_name: Mapped[str | None] = mapped_column(String(50), nullable=True)
+
+    problem: Mapped[Problem] = relationship(lazy="joined")
+
+
+class StudyPlanEnrollment(Base):
+    __tablename__ = "study_plan_enrollment"
+    __table_args__ = (UniqueConstraint("plan_id", "user_id", name="uq_study_plan_enrollment"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    plan_id: Mapped[int] = mapped_column(ForeignKey("study_plan.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
 

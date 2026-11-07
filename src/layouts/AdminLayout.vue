@@ -11,6 +11,7 @@ const navItems = [
   { path: '/admin/dashboard', label: '数据概览', icon: 'DataAnalysis' },
   { path: '/admin/users', label: '用户管理', icon: 'User' },
   { path: '/admin/problems', label: '题目管理', icon: 'Document' },
+  { path: '/admin/plans', label: '学习计划', icon: 'Reading' },
   { path: '/admin/contests', label: '竞赛管理', icon: 'Trophy' },
   { path: '/admin/judge', label: '判题任务', icon: 'Cpu' },
 ]

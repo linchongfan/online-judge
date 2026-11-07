@@ -11,6 +11,9 @@ import type {
   AdminProblemWrite,
   AdminSolution,
   AdminStatusDistribution,
+  AdminStudyPlanDetail,
+  AdminStudyPlanSummary,
+  AdminStudyPlanWrite,
   AdminTestDataUploadResult,
   AdminTestDataVersion,
   AdminUser,
@@ -21,6 +24,7 @@ import type {
   Page,
   ProblemStatus,
   SolutionCode,
+  StudyPlanStatus,
   UserRole,
   UserStatus,
 } from '../types'
@@ -56,6 +60,13 @@ export interface AdminContestListParams {
   keyword?: string
   status?: ContestStatus
   publicationStatus?: ContestPublicationStatus
+}
+
+export interface AdminStudyPlanListParams {
+  page?: number
+  pageSize?: number
+  keyword?: string
+  status?: StudyPlanStatus
 }
 
 export function getAdminDashboard(options: RequestControl = {}): Promise<AdminDashboard> {
@@ -280,6 +291,45 @@ export function listAdminContestParticipants(contestId: number): Promise<AdminCo
 
 export function recomputeAdminContest(contestId: number): Promise<MessageResponse> {
   return request<MessageResponse>(`/admin/contests/${contestId}/recompute`, { method: 'POST', timeoutMs: 120_000 })
+}
+
+export function listAdminStudyPlans(
+  params: AdminStudyPlanListParams = {},
+  options: RequestControl = {},
+): Promise<Page<AdminStudyPlanSummary>> {
+  return request<Page<AdminStudyPlanSummary>>('/admin/study-plans', {
+    ...options,
+    query: {
+      page: params.page,
+      page_size: params.pageSize,
+      keyword: params.keyword,
+      status: params.status,
+    },
+  })
+}
+
+export function getAdminStudyPlan(planId: number): Promise<AdminStudyPlanDetail> {
+  return request<AdminStudyPlanDetail>(`/admin/study-plans/${planId}`)
+}
+
+export function createAdminStudyPlan(data: AdminStudyPlanWrite): Promise<AdminStudyPlanDetail> {
+  return request<AdminStudyPlanDetail>('/admin/study-plans', { method: 'POST', json: data })
+}
+
+export function updateAdminStudyPlan(planId: number, data: AdminStudyPlanWrite): Promise<AdminStudyPlanDetail> {
+  return request<AdminStudyPlanDetail>(`/admin/study-plans/${planId}`, { method: 'PUT', json: data })
+}
+
+function changeAdminStudyPlanStatus(planId: number, action: 'publish' | 'archive'): Promise<AdminStudyPlanDetail> {
+  return request<AdminStudyPlanDetail>(`/admin/study-plans/${planId}/${action}`, { method: 'POST' })
+}
+
+export function publishAdminStudyPlan(planId: number): Promise<AdminStudyPlanDetail> {
+  return changeAdminStudyPlanStatus(planId, 'publish')
+}
+
+export function archiveAdminStudyPlan(planId: number): Promise<AdminStudyPlanDetail> {
+  return changeAdminStudyPlanStatus(planId, 'archive')
 }
 
 export function listAdminJudgeWorkers(options: RequestControl = {}): Promise<JudgeWorker[]> {

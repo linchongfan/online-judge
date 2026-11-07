@@ -26,6 +26,7 @@ from app.models import (
     Problem,
     ProblemStatus,
     RegistrationStatus,
+    StudyPlanStatus,
     Submission,
     TestCase,
     TestDataStatus,
@@ -50,6 +51,11 @@ from app.schemas.admin import (
 from app.schemas.common import MessageResponse, Page, make_page
 from app.schemas.contest import ContestResponse, ContestWriteRequest
 from app.schemas.problem import AdminProblemResponse, ProblemWriteRequest
+from app.schemas.study_plan import (
+    AdminStudyPlanDetail,
+    AdminStudyPlanSummary,
+    StudyPlanWriteRequest,
+)
 from app.schemas.test_data import TestDataLimits
 from app.services.audit import record_audit
 from app.services.auth import revoke_user_sessions, send_reset_code
@@ -67,6 +73,13 @@ from app.services.problems import (
     problem_stats,
     serialize_detail,
     upsert_problem,
+)
+from app.services.study_plans import (
+    get_study_plan,
+    list_admin_study_plans,
+    publish_study_plan,
+    serialize_admin_detail,
+    upsert_study_plan,
 )
 from app.services.test_data import TestDataService, TestDataValidationError
 
@@ -731,3 +744,58 @@ def audit_logs(db: Db, admin: AdminUser, page: int = Query(1, ge=1), page_size: 
         select(AdminAuditLog).order_by(AdminAuditLog.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
     ).all()
     return make_page(list(items), total, page, page_size)
+
+
+@router.get("/study-plans", response_model=Page[AdminStudyPlanSummary])
+def admin_study_plans(
+    db: Db,
+    admin: AdminUser,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    keyword: str | None = Query(None, max_length=100),
+    plan_status: StudyPlanStatus | None = Query(None, alias="status"),
+):
+    items, total = list_admin_study_plans(db, page, page_size, keyword, plan_status)
+    return make_page(items, total, page, page_size)
+
+
+@router.post("/study-plans", response_model=AdminStudyPlanDetail, status_code=status.HTTP_201_CREATED)
+def create_study_plan(data: StudyPlanWriteRequest, request: Request, db: Db, admin: AdminUser):
+    plan = upsert_study_plan(db, data, admin.id)
+    record_audit(db, admin.id, "study_plan.create", "study_plan", plan.id, ip_address=request_ip(request))
+    db.commit()
+    return serialize_admin_detail(plan)
+
+
+@router.get("/study-plans/{plan_id}", response_model=AdminStudyPlanDetail)
+def admin_study_plan_detail(plan_id: int, db: Db, admin: AdminUser):
+    return serialize_admin_detail(get_study_plan(db, plan_id, include_unpublished=True))
+
+
+@router.put("/study-plans/{plan_id}", response_model=AdminStudyPlanDetail)
+def edit_study_plan(
+    plan_id: int, data: StudyPlanWriteRequest, request: Request, db: Db, admin: AdminUser
+):
+    plan = get_study_plan(db, plan_id, include_unpublished=True)
+    upsert_study_plan(db, data, admin.id, plan)
+    record_audit(db, admin.id, "study_plan.update", "study_plan", plan.id, ip_address=request_ip(request))
+    db.commit()
+    return serialize_admin_detail(plan)
+
+
+@router.post("/study-plans/{plan_id}/publish", response_model=AdminStudyPlanDetail)
+def publish_study_plan_route(plan_id: int, request: Request, db: Db, admin: AdminUser):
+    plan = get_study_plan(db, plan_id, include_unpublished=True)
+    publish_study_plan(db, plan)
+    record_audit(db, admin.id, "study_plan.publish", "study_plan", plan.id, ip_address=request_ip(request))
+    db.commit()
+    return serialize_admin_detail(plan)
+
+
+@router.post("/study-plans/{plan_id}/archive", response_model=AdminStudyPlanDetail)
+def archive_study_plan_route(plan_id: int, request: Request, db: Db, admin: AdminUser):
+    plan = get_study_plan(db, plan_id, include_unpublished=True)
+    plan.status = StudyPlanStatus.ARCHIVED
+    record_audit(db, admin.id, "study_plan.archive", "study_plan", plan.id, ip_address=request_ip(request))
+    db.commit()
+    return serialize_admin_detail(plan)

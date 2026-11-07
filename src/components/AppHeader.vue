@@ -48,7 +48,7 @@ watch(() => route.path, path => { if (path.startsWith('/contests')) markContests
 onBeforeUnmount(() => { if (refreshTimer) clearInterval(refreshTimer) })
 const active = computed(() => {
   if (route.path.startsWith('/problems')) return '/problems'
-  if (route.path.startsWith('/curriculum')) return '/curriculum'
+  if (route.path.startsWith('/plans')) return '/plans'
   if (route.path.startsWith('/contests')) return '/contests'
   if (route.path.startsWith('/submissions')) return '/submissions'
   return ''
@@ -67,7 +67,7 @@ async function signOut() {
       <AppLogo />
       <nav class="main-nav" aria-label="主导航">
         <router-link to="/problems" :class="{ active: active === '/problems' }">题库</router-link>
-        <router-link to="/curriculum" :class="{ active: active === '/curriculum' }">C 语言题单</router-link>
+        <router-link to="/plans" :class="{ active: active === '/plans' }">学习计划</router-link>
         <router-link to="/contests" :class="{ active: active === '/contests' }" @click="markContestsRead">竞赛<span v-if="showContestDot" class="live-dot" /></router-link>
         <router-link v-if="session.loggedIn" to="/submissions" :class="{ active: active === '/submissions' }">提交记录</router-link>
       </nav>

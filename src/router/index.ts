@@ -6,7 +6,8 @@ const router = createRouter({
   routes: [
     { path: '/', redirect: '/problems' },
     { path: '/problems', component: () => import('../views/ProblemListView.vue'), meta: { title: '题库' } },
-    { path: '/curriculum', component: () => import('../views/CurriculumView.vue'), meta: { title: 'C 语言题单' } },
+    { path: '/plans', component: () => import('../views/StudyPlanListView.vue'), meta: { title: '学习计划' } },
+    { path: '/plans/:id', component: () => import('../views/StudyPlanDetailView.vue'), meta: { title: '学习计划详情' } },
     { path: '/problems/:id', component: () => import('../views/ProblemWorkspaceView.vue'), meta: { title: '在线做题', workspace: true } },
     { path: '/contests', component: () => import('../views/ContestListView.vue'), meta: { title: '竞赛' } },
     { path: '/contests/:id', component: () => import('../views/ContestDetailView.vue'), meta: { title: '竞赛详情' } },
@@ -19,11 +20,27 @@ const router = createRouter({
     { path: '/admin/dashboard', component: () => import('../views/admin/AdminDashboardView.vue'), meta: { title: '数据概览', admin: true } },
     { path: '/admin/users', component: () => import('../views/admin/AdminUsersView.vue'), meta: { title: '用户管理', admin: true } },
     { path: '/admin/problems', component: () => import('../views/admin/AdminProblemsView.vue'), meta: { title: '题目管理', admin: true } },
+    { path: '/admin/plans', component: () => import('../views/admin/AdminStudyPlansView.vue'), meta: { title: '学习计划', admin: true } },
     { path: '/admin/contests', component: () => import('../views/admin/AdminContestsView.vue'), meta: { title: '竞赛管理', admin: true } },
     { path: '/admin/judge', component: () => import('../views/admin/AdminJudgeView.vue'), meta: { title: '判题任务', admin: true } },
     { path: '/:pathMatch(.*)*', redirect: '/problems' },
   ],
   scrollBehavior: () => ({ top: 0 }),
+})
+
+const CHUNK_RELOAD_KEY = 'xinbaoyan-chunk-reloaded'
+router.onError((error) => {
+  const message = error instanceof Error ? error.message : String(error)
+  if (!/dynamically imported module|module script failed|Importing a module script/i.test(message)) return
+  try {
+    if (sessionStorage.getItem(CHUNK_RELOAD_KEY)) return
+    sessionStorage.setItem(CHUNK_RELOAD_KEY, '1')
+  } catch { /* sessionStorage unavailable: still reload once per failed navigation */ }
+  window.location.reload()
+})
+
+router.afterEach(() => {
+  try { sessionStorage.removeItem(CHUNK_RELOAD_KEY) } catch { /* ignore */ }
 })
 
 router.beforeEach(async (to) => {
