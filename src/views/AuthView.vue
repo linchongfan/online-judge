@@ -369,8 +369,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .auth-page { min-height: 100vh; display: grid; grid-template-columns: minmax(520px, 1.08fr) minmax(500px, .92fr); background: #fff; }
-.brand-panel { position: relative; overflow: hidden; min-height: 100vh; padding: 36px clamp(36px, 4vw, 64px) 26px; color: var(--text); background: #edf4ff; border-right: 1px solid #dce8f8; display: flex; flex-direction: column; }
-.brand-panel::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 6px; background: var(--primary); }
+.brand-panel { position: relative; overflow: hidden; min-height: 100vh; padding: 36px clamp(36px, 4vw, 64px) 26px; color: var(--text); background: #edf4ff; display: flex; flex-direction: column; }
 .brand-panel::after { content: ''; position: absolute; right: 0; top: 0; width: 96px; height: 8px; background: var(--accent); }
 .brand-content { width: 100%; max-width: 640px; margin: auto; position: relative; z-index: 1; }
 .brand-logo { display: inline-flex; }

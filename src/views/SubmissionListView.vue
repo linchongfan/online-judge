@@ -266,11 +266,10 @@ onBeforeUnmount(() => { if (poller) clearInterval(poller); generation += 1 })
 
 <style scoped>
 .submissions-page { color: var(--text); }
-.submissions-page > .page-heading { position: relative; padding-left: 17px; }
-.submissions-page > .page-heading::before { content: ''; position: absolute; left: 0; top: 5px; bottom: 5px; width: 4px; border-radius: 3px; background: var(--primary); }
+.submissions-page > .page-heading { position: relative; }
 .submissions-page > .page-heading .eyebrow { margin-bottom: 6px; }
 .heading-actions { display: flex; gap: 10px; }
-.summary-strip { min-height: 92px; display: flex; align-items: center; gap: 28px; padding: 18px 24px; margin-bottom: 20px; border-top: 3px solid var(--primary); border-radius: 10px; box-shadow: none; }
+.summary-strip { min-height: 92px; display: flex; align-items: center; gap: 28px; padding: 18px 24px; margin-bottom: 20px; border: 0; border-radius: 10px; box-shadow: none; }
 .summary-strip > div { display: flex; align-items: center; gap: 13px; }
 .summary-strip > i { width: 1px; height: 35px; background: var(--border); }
 .summary-icon { width: 39px; height: 39px; border-radius: 8px; display: grid; place-items: center; font-size: 18px; }
@@ -307,7 +306,7 @@ onBeforeUnmount(() => { if (poller) clearInterval(poller); generation += 1 })
 .dialog-heading .eyebrow { margin-bottom: 5px; }
 .dialog-heading h2 { color: var(--text-strong); font-size: 20px; margin: 0 0 12px; }
 .dialog-heading h2 span { color: var(--text-tertiary); font-size: 13px; font-weight: 400; }
-.detail-problem { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border: 1px solid #d7e5f7; border-left: 3px solid var(--primary); border-radius: 8px; background: #f5f9ff; margin-bottom: 17px; }
+.detail-problem { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border: 1px solid #d7e5f7; border-radius: 8px; background: #f5f9ff; margin-bottom: 17px; }
 .detail-problem-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 8px; background: #fff; color: var(--primary); }
 .detail-problem div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .detail-problem small { color: var(--text-tertiary); font-size: 9px; }.detail-problem strong { color: var(--text-strong); font-size: 12px; }
@@ -327,7 +326,7 @@ onBeforeUnmount(() => { if (poller) clearInterval(poller); generation += 1 })
 .security-note { display: flex; justify-content: center; align-items: center; gap: 5px; color: var(--text-tertiary); font-size: 9px; margin-top: 15px; }
 .detail-loading { display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text-secondary); font-size: 12px; padding: 42px 0; }
 .detail-error { display: flex; flex-direction: column; align-items: center; gap: 9px; color: var(--text-secondary); font-size: 12px; padding: 34px 0; text-align: center; }
-:global(.submission-dialog) { max-width: calc(100vw - 30px); border-top: 4px solid var(--primary); border-radius: 10px; }
+:global(.submission-dialog) { max-width: calc(100vw - 30px); border-radius: 10px; }
 @media (max-width: 1000px) {
   .summary-strip .prototype-note { display: none; }
   .filter-bar { flex-wrap: wrap; }
