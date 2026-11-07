@@ -6,6 +6,7 @@ const router = createRouter({
   routes: [
     { path: '/', redirect: '/problems' },
     { path: '/problems', component: () => import('../views/ProblemListView.vue'), meta: { title: '题库' } },
+    { path: '/curriculum', component: () => import('../views/CurriculumView.vue'), meta: { title: 'C 语言题单' } },
     { path: '/problems/:id', component: () => import('../views/ProblemWorkspaceView.vue'), meta: { title: '在线做题', workspace: true } },
     { path: '/contests', component: () => import('../views/ContestListView.vue'), meta: { title: '竞赛' } },
     { path: '/contests/:id', component: () => import('../views/ContestDetailView.vue'), meta: { title: '竞赛详情' } },
