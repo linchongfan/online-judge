@@ -1,0 +1,4053 @@
+[
+ {
+  "id": 2000,
+  "topic": "程序设计入门",
+  "title": "Hello, World!",
+  "difficulty": "简单",
+  "tags": [
+   "C语言入门",
+   "顺序结构"
+  ],
+  "description": [
+   "输出一行文字：Hello, World!"
+  ],
+  "input_description": "无输入。",
+  "output_description": "输出 Hello, World!",
+  "constraints": [
+   "无"
+  ],
+  "cases": [
+   {
+    "input": "\n",
+    "output": "Hello, World!\n",
+    "is_sample": true
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    printf(\"Hello, World!\\n\");\n    return 0;\n}\n"
+ },
+ {
+  "id": 2001,
+  "topic": "程序设计入门",
+  "title": "输出三行文字",
+  "difficulty": "简单",
+  "tags": [
+   "C语言入门",
+   "顺序结构"
+  ],
+  "description": [
+   "按顺序输出三行文字，每行内容见输出说明。"
+  ],
+  "input_description": "无输入。",
+  "output_description": "第一行输出 C 语言，第二行输出 顺序结构，第三行输出 从第一行开始。",
+  "constraints": [
+   "无"
+  ],
+  "cases": [
+   {
+    "input": "\n",
+    "output": "C 语言\n顺序结构\n从第一行开始\n",
+    "is_sample": true
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    printf(\"C 语言\\n\");\n    printf(\"顺序结构\\n\");\n    printf(\"从第一行开始\\n\");\n    return 0;\n}\n"
+ },
+ {
+  "id": 2002,
+  "topic": "程序设计入门",
+  "title": "输出直角三角形",
+  "difficulty": "简单",
+  "tags": [
+   "C语言入门",
+   "顺序结构"
+  ],
+  "description": [
+   "输出一个由星号组成的直角三角形，共 3 行，每行星号数量依次为 1、2、3。"
+  ],
+  "input_description": "无输入。",
+  "output_description": "共 3 行，第 i 行输出 i 个星号。",
+  "constraints": [
+   "无"
+  ],
+  "cases": [
+   {
+    "input": "\n",
+    "output": "*\n**\n***\n",
+    "is_sample": true
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    printf(\"*\\n\");\n    printf(\"**\\n\");\n    printf(\"***\\n\");\n    return 0;\n}\n"
+ },
+ {
+  "id": 2003,
+  "topic": "程序设计入门",
+  "title": "输出个人信息卡",
+  "difficulty": "简单",
+  "tags": [
+   "C语言入门",
+   "顺序结构"
+  ],
+  "description": [
+   "按固定格式输出一张三行的个人信息卡。"
+  ],
+  "input_description": "无输入。",
+  "output_description": "第一行输出 姓名: 张三，第二行输出 学号: 20240001，第三行输出 专业: 计算机。",
+  "constraints": [
+   "无"
+  ],
+  "cases": [
+   {
+    "input": "\n",
+    "output": "姓名: 张三\n学号: 20240001\n专业: 计算机\n",
+    "is_sample": true
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    printf(\"姓名: 张三\\n\");\n    printf(\"学号: 20240001\\n\");\n    printf(\"专业: 计算机\\n\");\n    return 0;\n}\n"
+ },
+ {
+  "id": 2004,
+  "topic": "程序设计入门",
+  "title": "整数的两倍",
+  "difficulty": "简单",
+  "tags": [
+   "C语言入门",
+   "输入输出"
+  ],
+  "description": [
+   "读入一个整数，输出它的两倍。"
+  ],
+  "input_description": "一行一个整数 n。",
+  "output_description": "输出一个整数，表示 2n。",
+  "constraints": [
+   "-100000 <= n <= 100000"
+  ],
+  "cases": [
+   {
+    "input": "7\n",
+    "output": "14\n",
+    "is_sample": true
+   },
+   {
+    "input": "-13\n",
+    "output": "-26\n",
+    "is_sample": false
+   },
+   {
+    "input": "0\n",
+    "output": "0\n",
+    "is_sample": false
+   },
+   {
+    "input": "99999\n",
+    "output": "199998\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    long long n;\n    scanf(\"%lld\", &n);\n    printf(\"%lld\\n\", n * 2);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2005,
+  "topic": "程序设计入门",
+  "title": "交换两个整数",
+  "difficulty": "简单",
+  "tags": [
+   "C语言入门",
+   "变量交换"
+  ],
+  "description": [
+   "读入两个整数 a 和 b，交换它们的值后按原来的顺序输出。"
+  ],
+  "input_description": "一行两个整数 a、b，用空格分隔。",
+  "output_description": "输出一行两个整数，分别是交换后的 a（原 b）和 b（原 a）。",
+  "constraints": [
+   "0 <= a, b <= 1000000"
+  ],
+  "cases": [
+   {
+    "input": "3 5\n",
+    "output": "5 3\n",
+    "is_sample": true
+   },
+   {
+    "input": "100 200\n",
+    "output": "200 100\n",
+    "is_sample": false
+   },
+   {
+    "input": "7 7\n",
+    "output": "7 7\n",
+    "is_sample": false
+   },
+   {
+    "input": "999999 1\n",
+    "output": "1 999999\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    long long a, b, t;\n    scanf(\"%lld %lld\", &a, &b);\n    t = a; a = b; b = t;\n    printf(\"%lld %lld\\n\", a, b);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2006,
+  "topic": "程序设计入门",
+  "title": "圆的周长与面积",
+  "difficulty": "简单",
+  "tags": [
+   "C语言入门",
+   "浮点计算"
+  ],
+  "description": [
+   "读入圆的半径 r，计算并输出周长和面积。圆周率取 3.14159，结果保留两位小数。"
+  ],
+  "input_description": "一行一个实数 r。",
+  "output_description": "输出一行两个实数，分别是周长和面积，保留两位小数，用空格分隔。",
+  "constraints": [
+   "0 < r <= 1000"
+  ],
+  "cases": [
+   {
+    "input": "1\n",
+    "output": "6.28 3.14\n",
+    "is_sample": true
+   },
+   {
+    "input": "2.5\n",
+    "output": "15.71 19.63\n",
+    "is_sample": false
+   },
+   {
+    "input": "3\n",
+    "output": "18.85 28.27\n",
+    "is_sample": false
+   },
+   {
+    "input": "10\n",
+    "output": "62.83 314.16\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    double r, pi = 3.14159;\n    scanf(\"%lf\", &r);\n    printf(\"%.2f %.2f\\n\", 2 * pi * r, pi * r * r);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2007,
+  "topic": "程序设计入门",
+  "title": "秒数换算时分秒",
+  "difficulty": "简单",
+  "tags": [
+   "C语言入门",
+   "整除取余"
+  ],
+  "description": [
+   "读入一个非负整数表示秒数，换算成小时、分钟和秒并输出。"
+  ],
+  "input_description": "一行一个整数 s。",
+  "output_description": "输出一行三个整数，分别是小时、分钟、秒，用空格分隔。",
+  "constraints": [
+   "0 <= s <= 1000000"
+  ],
+  "cases": [
+   {
+    "input": "3661\n",
+    "output": "1 1 1\n",
+    "is_sample": true
+   },
+   {
+    "input": "0\n",
+    "output": "0 0 0\n",
+    "is_sample": false
+   },
+   {
+    "input": "86399\n",
+    "output": "23 59 59\n",
+    "is_sample": false
+   },
+   {
+    "input": "59\n",
+    "output": "0 0 59\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    long long s;\n    scanf(\"%lld\", &s);\n    printf(\"%lld %lld %lld\\n\", s / 3600, s % 3600 / 60, s % 60);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2008,
+  "topic": "程序设计入门",
+  "title": "三个整数的平均值",
+  "difficulty": "简单",
+  "tags": [
+   "C语言入门",
+   "浮点计算"
+  ],
+  "description": [
+   "读入三个整数，输出它们的平均值，保留两位小数。"
+  ],
+  "input_description": "一行三个整数。",
+  "output_description": "输出一个实数，表示平均值，保留两位小数。",
+  "constraints": [
+   "-1000 <= 每个整数 <= 1000"
+  ],
+  "cases": [
+   {
+    "input": "1 2 3\n",
+    "output": "2.00\n",
+    "is_sample": true
+   },
+   {
+    "input": "10 20 37\n",
+    "output": "22.33\n",
+    "is_sample": false
+   },
+   {
+    "input": "-1 0 1\n",
+    "output": "0.00\n",
+    "is_sample": false
+   },
+   {
+    "input": "100 100 100\n",
+    "output": "100.00\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    long long a, b, c;\n    scanf(\"%lld %lld %lld\", &a, &b, &c);\n    printf(\"%.2f\\n\", (a + b + c) / 3.0);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2009,
+  "topic": "程序设计入门",
+  "title": "四位数各位之和",
+  "difficulty": "简单",
+  "tags": [
+   "C语言入门",
+   "整除取余"
+  ],
+  "description": [
+   "读入一个四位数，输出它各位数字之和。"
+  ],
+  "input_description": "一行一个四位数 n。",
+  "output_description": "输出一个整数，表示各位数字之和。",
+  "constraints": [
+   "1000 <= n <= 9999"
+  ],
+  "cases": [
+   {
+    "input": "1234\n",
+    "output": "10\n",
+    "is_sample": true
+   },
+   {
+    "input": "9999\n",
+    "output": "36\n",
+    "is_sample": false
+   },
+   {
+    "input": "1000\n",
+    "output": "1\n",
+    "is_sample": false
+   },
+   {
+    "input": "5050\n",
+    "output": "10\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int n;\n    scanf(\"%d\", &n);\n    printf(\"%d\\n\", n / 1000 + n / 100 % 10 + n / 10 % 10 + n % 10);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2010,
+  "topic": "数据与表达式",
+  "title": "整数四则运算",
+  "difficulty": "简单",
+  "tags": [
+   "数据与表达式",
+   "运算符"
+  ],
+  "description": [
+   "读入两个整数 a、b，依次输出它们的和、差、积。"
+  ],
+  "input_description": "一行两个整数 a、b。",
+  "output_description": "输出一行三个整数：a+b、a-b、a*b。",
+  "constraints": [
+   "-10000 <= a, b <= 10000"
+  ],
+  "cases": [
+   {
+    "input": "7 3\n",
+    "output": "10 4 21\n",
+    "is_sample": true
+   },
+   {
+    "input": "10 10\n",
+    "output": "20 0 100\n",
+    "is_sample": false
+   },
+   {
+    "input": "-4 6\n",
+    "output": "2 -10 -24\n",
+    "is_sample": false
+   },
+   {
+    "input": "0 99\n",
+    "output": "99 -99 0\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    long long a, b;\n    scanf(\"%lld %lld\", &a, &b);\n    printf(\"%lld %lld %lld\\n\", a + b, a - b, a * b);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2011,
+  "topic": "数据与表达式",
+  "title": "整数除法与取余",
+  "difficulty": "简单",
+  "tags": [
+   "数据与表达式",
+   "整除取余"
+  ],
+  "description": [
+   "读入两个正整数 a、b，输出 a 除以 b 的商和余数。"
+  ],
+  "input_description": "一行两个正整数 a、b。",
+  "output_description": "输出一行两个整数：商和余数。",
+  "constraints": [
+   "1 <= a, b <= 1000000"
+  ],
+  "cases": [
+   {
+    "input": "17 5\n",
+    "output": "3 2\n",
+    "is_sample": true
+   },
+   {
+    "input": "100 7\n",
+    "output": "14 2\n",
+    "is_sample": false
+   },
+   {
+    "input": "9 9\n",
+    "output": "1 0\n",
+    "is_sample": false
+   },
+   {
+    "input": "1 2\n",
+    "output": "0 1\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    long long a, b;\n    scanf(\"%lld %lld\", &a, &b);\n    printf(\"%lld %lld\\n\", a / b, a % b);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2012,
+  "topic": "数据与表达式",
+  "title": "浮点数平均值",
+  "difficulty": "简单",
+  "tags": [
+   "数据与表达式",
+   "浮点数"
+  ],
+  "description": [
+   "读入两个实数，输出它们的平均值，保留三位小数。"
+  ],
+  "input_description": "一行两个实数 a、b。",
+  "output_description": "输出一个实数，表示平均值，保留三位小数。",
+  "constraints": [
+   "-1000 <= a, b <= 1000"
+  ],
+  "cases": [
+   {
+    "input": "1.5 2.5\n",
+    "output": "2.000\n",
+    "is_sample": true
+   },
+   {
+    "input": "0 1\n",
+    "output": "0.500\n",
+    "is_sample": false
+   },
+   {
+    "input": "-3 3\n",
+    "output": "0.000\n",
+    "is_sample": false
+   },
+   {
+    "input": "10.125 20.875\n",
+    "output": "15.500\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    double a, b;\n    scanf(\"%lf %lf\", &a, &b);\n    printf(\"%.3f\\n\", (a + b) / 2.0);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2013,
+  "topic": "数据与表达式",
+  "title": "华氏温度转摄氏温度",
+  "difficulty": "简单",
+  "tags": [
+   "数据与表达式",
+   "类型转换"
+  ],
+  "description": [
+   "读入华氏温度 F，按 C = 5 × (F − 32) / 9 计算摄氏温度，保留两位小数。"
+  ],
+  "input_description": "一行一个实数 F。",
+  "output_description": "输出一个实数，表示摄氏温度，保留两位小数。",
+  "constraints": [
+   "-100 <= F <= 1000"
+  ],
+  "cases": [
+   {
+    "input": "32\n",
+    "output": "0.00\n",
+    "is_sample": true
+   },
+   {
+    "input": "212\n",
+    "output": "100.00\n",
+    "is_sample": false
+   },
+   {
+    "input": "98.6\n",
+    "output": "37.00\n",
+    "is_sample": false
+   },
+   {
+    "input": "0\n",
+    "output": "-17.78\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    double f;\n    scanf(\"%lf\", &f);\n    printf(\"%.2f\\n\", 5.0 * (f - 32) / 9.0);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2014,
+  "topic": "数据与表达式",
+  "title": "截断取整",
+  "difficulty": "简单",
+  "tags": [
+   "数据与表达式",
+   "类型转换"
+  ],
+  "description": [
+   "读入一个实数 x，把它赋值给整数变量后输出该整数，再输出 x 与其整数部分的差（保留三位小数）。"
+  ],
+  "input_description": "一行一个实数 x。",
+  "output_description": "输出一行：整数部分，以及小数部分（保留三位小数），用空格分隔。",
+  "constraints": [
+   "0 <= x <= 1000"
+  ],
+  "cases": [
+   {
+    "input": "3.75\n",
+    "output": "3 0.750\n",
+    "is_sample": true
+   },
+   {
+    "input": "10.0\n",
+    "output": "10 0.000\n",
+    "is_sample": false
+   },
+   {
+    "input": "0.5\n",
+    "output": "0 0.500\n",
+    "is_sample": false
+   },
+   {
+    "input": "99.999\n",
+    "output": "99 0.999\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    double x;\n    int whole;\n    scanf(\"%lf\", &x);\n    whole = (int) x;\n    printf(\"%d %.3f\\n\", whole, x - whole);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2015,
+  "topic": "数据与表达式",
+  "title": "三位数反转",
+  "difficulty": "简单",
+  "tags": [
+   "数据与表达式",
+   "整除取余"
+  ],
+  "description": [
+   "读入一个三位数，输出它的各位数字反转后的整数（例如 123 变成 321，120 变成 21）。"
+  ],
+  "input_description": "一行一个三位数 n。",
+  "output_description": "输出一个整数，表示反转后的数。",
+  "constraints": [
+   "100 <= n <= 999"
+  ],
+  "cases": [
+   {
+    "input": "123\n",
+    "output": "321\n",
+    "is_sample": true
+   },
+   {
+    "input": "120\n",
+    "output": "21\n",
+    "is_sample": false
+   },
+   {
+    "input": "909\n",
+    "output": "909\n",
+    "is_sample": false
+   },
+   {
+    "input": "456\n",
+    "output": "654\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int n;\n    scanf(\"%d\", &n);\n    printf(\"%d\\n\", n % 10 * 100 + n / 10 % 10 * 10 + n / 100);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2016,
+  "topic": "数据与表达式",
+  "title": "圆面积与球体积",
+  "difficulty": "简单",
+  "tags": [
+   "数据与表达式",
+   "常量"
+  ],
+  "description": [
+   "读入半径 r，圆周率取 3.14159，输出圆面积和球体积，均保留两位小数。"
+  ],
+  "input_description": "一行一个实数 r。",
+  "output_description": "输出一行两个实数：圆面积、球体积，保留两位小数。",
+  "constraints": [
+   "0 < r <= 500"
+  ],
+  "cases": [
+   {
+    "input": "1\n",
+    "output": "3.14 4.19\n",
+    "is_sample": true
+   },
+   {
+    "input": "2\n",
+    "output": "12.57 33.51\n",
+    "is_sample": false
+   },
+   {
+    "input": "3.5\n",
+    "output": "38.48 179.59\n",
+    "is_sample": false
+   },
+   {
+    "input": "10\n",
+    "output": "314.16 4188.79\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    double r, pi = 3.14159;\n    scanf(\"%lf\", &r);\n    printf(\"%.2f %.2f\\n\", pi * r * r, 4.0 / 3.0 * pi * r * r * r);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2017,
+  "topic": "数据与表达式",
+  "title": "复合赋值与自增",
+  "difficulty": "中等",
+  "tags": [
+   "数据与表达式",
+   "自增运算"
+  ],
+  "description": [
+   "读入整数 n，依次执行：n 加上 5、乘以 2、减去 3、再自增一次。输出执行后的值。"
+  ],
+  "input_description": "一行一个整数 n。",
+  "output_description": "输出一个整数，表示最终结果。",
+  "constraints": [
+   "-1000 <= n <= 1000"
+  ],
+  "cases": [
+   {
+    "input": "1\n",
+    "output": "10\n",
+    "is_sample": true
+   },
+   {
+    "input": "0\n",
+    "output": "8\n",
+    "is_sample": false
+   },
+   {
+    "input": "-5\n",
+    "output": "-2\n",
+    "is_sample": false
+   },
+   {
+    "input": "100\n",
+    "output": "208\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    long long n;\n    scanf(\"%lld\", &n);\n    n += 5;\n    n *= 2;\n    n -= 3;\n    n++;\n    printf(\"%lld\\n\", n);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2018,
+  "topic": "数据与表达式",
+  "title": "大整数乘积",
+  "difficulty": "中等",
+  "tags": [
+   "数据与表达式",
+   "整数类型范围"
+  ],
+  "description": [
+   "读入两个整数 a、b，输出 a × b。注意结果可能超出 int 范围。"
+  ],
+  "input_description": "一行两个整数 a、b。",
+  "output_description": "输出一个整数，表示 a × b。",
+  "constraints": [
+   "-2000000000 <= a, b <= 2000000000"
+  ],
+  "cases": [
+   {
+    "input": "100000 100000\n",
+    "output": "10000000000\n",
+    "is_sample": true
+   },
+   {
+    "input": "-123456 654321\n",
+    "output": "-80779853376\n",
+    "is_sample": false
+   },
+   {
+    "input": "2000000000 2\n",
+    "output": "4000000000\n",
+    "is_sample": false
+   },
+   {
+    "input": "0 123456789\n",
+    "output": "0\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    long long a, b;\n    scanf(\"%lld %lld\", &a, &b);\n    printf(\"%lld\\n\", a * b);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2019,
+  "topic": "数据与表达式",
+  "title": "整数金额平均分配",
+  "difficulty": "中等",
+  "tags": [
+   "数据与表达式",
+   "整除取余"
+  ],
+  "description": [
+   "读入整数金额 m 和人数 n，按整数元平均分配，输出每人分得的金额和剩余金额。"
+  ],
+  "input_description": "一行两个整数 m、n。",
+  "output_description": "输出一行两个整数：每人金额、剩余金额。",
+  "constraints": [
+   "0 <= m <= 1000000",
+   "1 <= n <= 1000"
+  ],
+  "cases": [
+   {
+    "input": "100 3\n",
+    "output": "33 1\n",
+    "is_sample": true
+   },
+   {
+    "input": "10 4\n",
+    "output": "2 2\n",
+    "is_sample": false
+   },
+   {
+    "input": "99 7\n",
+    "output": "14 1\n",
+    "is_sample": false
+   },
+   {
+    "input": "0 5\n",
+    "output": "0 0\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    long long m, n;\n    scanf(\"%lld %lld\", &m, &n);\n    printf(\"%lld %lld\\n\", m / n, m % n);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2020,
+  "topic": "输入与输出",
+  "title": "整数原样输出",
+  "difficulty": "简单",
+  "tags": [
+   "输入与输出",
+   "scanf"
+  ],
+  "description": [
+   "读入一个整数并原样输出。"
+  ],
+  "input_description": "一行一个整数 n。",
+  "output_description": "输出该整数。",
+  "constraints": [
+   "-1000000 <= n <= 1000000"
+  ],
+  "cases": [
+   {
+    "input": "42\n",
+    "output": "42\n",
+    "is_sample": true
+   },
+   {
+    "input": "-7\n",
+    "output": "-7\n",
+    "is_sample": false
+   },
+   {
+    "input": "0\n",
+    "output": "0\n",
+    "is_sample": false
+   },
+   {
+    "input": "1000000\n",
+    "output": "1000000\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int n;\n    scanf(\"%d\", &n);\n    printf(\"%d\\n\", n);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2021,
+  "topic": "输入与输出",
+  "title": "格式化自我介绍",
+  "difficulty": "简单",
+  "tags": [
+   "输入与输出",
+   "printf"
+  ],
+  "description": [
+   "读入姓名（不含空格）和年龄，按“我叫姓名，今年年龄岁。”的格式输出。"
+  ],
+  "input_description": "一行一个字符串 name 和一个整数 age，用空格分隔。",
+  "output_description": "输出一行：我叫name，今年age岁。",
+  "constraints": [
+   "1 <= 姓名长度 <= 20",
+   "0 <= age <= 150"
+  ],
+  "cases": [
+   {
+    "input": "Tom 18\n",
+    "output": "我叫Tom，今年18岁。\n",
+    "is_sample": true
+   },
+   {
+    "input": "小明 20\n",
+    "output": "我叫小明，今年20岁。\n",
+    "is_sample": false
+   },
+   {
+    "input": "Alice 7\n",
+    "output": "我叫Alice，今年7岁。\n",
+    "is_sample": false
+   },
+   {
+    "input": "Bob 100\n",
+    "output": "我叫Bob，今年100岁。\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    char name[64];\n    int age;\n    scanf(\"%63s %d\", name, &age);\n    printf(\"我叫%s，今年%d岁。\\n\", name, age);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2022,
+  "topic": "输入与输出",
+  "title": "保留两位小数的和",
+  "difficulty": "简单",
+  "tags": [
+   "输入与输出",
+   "格式控制"
+  ],
+  "description": [
+   "读入两个实数，输出它们的和，保留两位小数。"
+  ],
+  "input_description": "一行两个实数 a、b。",
+  "output_description": "输出一个实数，表示 a+b，保留两位小数。",
+  "constraints": [
+   "-1000 <= a, b <= 1000"
+  ],
+  "cases": [
+   {
+    "input": "1.2 3.45\n",
+    "output": "4.65\n",
+    "is_sample": true
+   },
+   {
+    "input": "0.1 0.2\n",
+    "output": "0.30\n",
+    "is_sample": false
+   },
+   {
+    "input": "-1.5 1.5\n",
+    "output": "0.00\n",
+    "is_sample": false
+   },
+   {
+    "input": "99.999 0.001\n",
+    "output": "100.00\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    double a, b;\n    scanf(\"%lf %lf\", &a, &b);\n    printf(\"%.2f\\n\", a + b);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2023,
+  "topic": "输入与输出",
+  "title": "宽度对齐输出",
+  "difficulty": "简单",
+  "tags": [
+   "输入与输出",
+   "格式控制"
+  ],
+  "description": [
+   "读入三个整数，每个整数占 5 个字符宽度、右对齐输出在同一行。"
+  ],
+  "input_description": "一行三个整数。",
+  "output_description": "输出一行，每个整数宽度 5、右对齐。",
+  "constraints": [
+   "0 <= 每个整数 <= 99999"
+  ],
+  "cases": [
+   {
+    "input": "1 22 333\n",
+    "output": "    1   22  333\n",
+    "is_sample": true
+   },
+   {
+    "input": "10000 2 3\n",
+    "output": "10000    2    3\n",
+    "is_sample": false
+   },
+   {
+    "input": "0 0 0\n",
+    "output": "    0    0    0\n",
+    "is_sample": false
+   },
+   {
+    "input": "12345 54321 1\n",
+    "output": "1234554321    1\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int a, b, c;\n    scanf(\"%d %d %d\", &a, &b, &c);\n    printf(\"%5d%5d%5d\\n\", a, b, c);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2024,
+  "topic": "输入与输出",
+  "title": "字符的 ASCII 码",
+  "difficulty": "简单",
+  "tags": [
+   "输入与输出",
+   "字符"
+  ],
+  "description": [
+   "读入一个可见字符，输出它的 ASCII 码。"
+  ],
+  "input_description": "一行一个字符。",
+  "output_description": "输出一个整数，表示该字符的 ASCII 码。",
+  "constraints": [
+   "字符为可见 ASCII 字符"
+  ],
+  "cases": [
+   {
+    "input": "A\n",
+    "output": "65\n",
+    "is_sample": true
+   },
+   {
+    "input": "a\n",
+    "output": "97\n",
+    "is_sample": false
+   },
+   {
+    "input": "0\n",
+    "output": "48\n",
+    "is_sample": false
+   },
+   {
+    "input": "~\n",
+    "output": "126\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    char c;\n    scanf(\"%c\", &c);\n    printf(\"%d\\n\", c);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2025,
+  "topic": "输入与输出",
+  "title": "整行文本原样输出",
+  "difficulty": "中等",
+  "tags": [
+   "输入与输出",
+   "fgets"
+  ],
+  "description": [
+   "读入一整行文本（可能包含空格），原样输出该行内容。"
+  ],
+  "input_description": "一行文本，长度不超过 200。",
+  "output_description": "输出同一行文本。",
+  "constraints": [
+   "不含回车，允许空格"
+  ],
+  "cases": [
+   {
+    "input": "hello world\n",
+    "output": "hello world\n",
+    "is_sample": true
+   },
+   {
+    "input": "C 语言 输入输出\n",
+    "output": "C 语言 输入输出\n",
+    "is_sample": false
+   },
+   {
+    "input": "a\n",
+    "output": "a\n",
+    "is_sample": false
+   },
+   {
+    "input": "  leading spaces\n",
+    "output": "  leading spaces\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\n#include <string.h>\nint main(void) {\n    char line[512];\n    if (fgets(line, sizeof(line), stdin) == NULL) return 0;\n    size_t len = strlen(line);\n    while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) line[--len] = '\\0';\n    printf(\"%s\\n\", line);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2026,
+  "topic": "输入与输出",
+  "title": "八进制与十六进制",
+  "difficulty": "中等",
+  "tags": [
+   "输入与输出",
+   "进制输出"
+  ],
+  "description": [
+   "读入一个非负整数，输出它的八进制和十六进制表示（十六进制字母大写）。"
+  ],
+  "input_description": "一行一个非负整数 n。",
+  "output_description": "输出一行两个整数表示：八进制、十六进制，用空格分隔。",
+  "constraints": [
+   "0 <= n <= 1000000"
+  ],
+  "cases": [
+   {
+    "input": "255\n",
+    "output": "377 FF\n",
+    "is_sample": true
+   },
+   {
+    "input": "8\n",
+    "output": "10 8\n",
+    "is_sample": false
+   },
+   {
+    "input": "0\n",
+    "output": "0 0\n",
+    "is_sample": false
+   },
+   {
+    "input": "4095\n",
+    "output": "7777 FFF\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    unsigned int n;\n    scanf(\"%u\", &n);\n    printf(\"%o %X\\n\", n, n);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2027,
+  "topic": "输入与输出",
+  "title": "时间格式输出",
+  "difficulty": "中等",
+  "tags": [
+   "输入与输出",
+   "格式控制"
+  ],
+  "description": [
+   "读入秒数（0 到 86399），输出 HH:MM:SS 格式，不足两位补 0。"
+  ],
+  "input_description": "一行一个整数 s。",
+  "output_description": "输出 HH:MM:SS。",
+  "constraints": [
+   "0 <= s <= 86399"
+  ],
+  "cases": [
+   {
+    "input": "3661\n",
+    "output": "01:01:01\n",
+    "is_sample": true
+   },
+   {
+    "input": "59\n",
+    "output": "00:00:59\n",
+    "is_sample": false
+   },
+   {
+    "input": "0\n",
+    "output": "00:00:00\n",
+    "is_sample": false
+   },
+   {
+    "input": "86399\n",
+    "output": "23:59:59\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int s;\n    scanf(\"%d\", &s);\n    printf(\"%02d:%02d:%02d\\n\", s / 3600, s % 3600 / 60, s % 60);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2028,
+  "topic": "输入与输出",
+  "title": "科学计数法输出",
+  "difficulty": "中等",
+  "tags": [
+   "输入与输出",
+   "浮点格式"
+  ],
+  "description": [
+   "读入一个正实数，用科学计数法输出，保留三位小数，指数至少两位。"
+  ],
+  "input_description": "一行一个正实数 x。",
+  "output_description": "输出科学计数法形式的 x。",
+  "constraints": [
+   "0 < x <= 1000000"
+  ],
+  "cases": [
+   {
+    "input": "12345.678\n",
+    "output": "1.235e+04\n",
+    "is_sample": true
+   },
+   {
+    "input": "0.000123\n",
+    "output": "1.230e-04\n",
+    "is_sample": false
+   },
+   {
+    "input": "1\n",
+    "output": "1.000e+00\n",
+    "is_sample": false
+   },
+   {
+    "input": "999999\n",
+    "output": "1.000e+06\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    double x;\n    scanf(\"%lf\", &x);\n    printf(\"%.3e\\n\", x);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2029,
+  "topic": "输入与输出",
+  "title": "读到文件尾求和",
+  "difficulty": "困难",
+  "tags": [
+   "输入与输出",
+   "EOF"
+  ],
+  "description": [
+   "输入若干行，每行一个整数，直到文件结束。输出所有整数的和。"
+  ],
+  "input_description": "若干行，每行一个整数，至少一个。",
+  "output_description": "输出一个整数，表示所有整数之和。",
+  "constraints": [
+   "整数个数不超过 1000，绝对值不超过 1000000"
+  ],
+  "cases": [
+   {
+    "input": "1\n2\n3\n",
+    "output": "6\n",
+    "is_sample": true
+   },
+   {
+    "input": "10\n-5\n",
+    "output": "5\n",
+    "is_sample": false
+   },
+   {
+    "input": "0\n",
+    "output": "0\n",
+    "is_sample": false
+   },
+   {
+    "input": "100\n200\n300\n400\n",
+    "output": "1000\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    long long x, sum = 0;\n    while (scanf(\"%lld\", &x) == 1) sum += x;\n    printf(\"%lld\\n\", sum);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2030,
+  "topic": "选择结构",
+  "title": "判断奇偶",
+  "difficulty": "简单",
+  "tags": [
+   "选择结构",
+   "if-else"
+  ],
+  "description": [
+   "读入一个整数，判断它是奇数还是偶数。"
+  ],
+  "input_description": "一行一个整数 n。",
+  "output_description": "偶数输出 EVEN，奇数输出 ODD。",
+  "constraints": [
+   "-1000000 <= n <= 1000000"
+  ],
+  "cases": [
+   {
+    "input": "4\n",
+    "output": "EVEN\n",
+    "is_sample": true
+   },
+   {
+    "input": "7\n",
+    "output": "ODD\n",
+    "is_sample": false
+   },
+   {
+    "input": "0\n",
+    "output": "EVEN\n",
+    "is_sample": false
+   },
+   {
+    "input": "-9\n",
+    "output": "ODD\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    long long n;\n    scanf(\"%lld\", &n);\n    if (n % 2 == 0) printf(\"EVEN\\n\");\n    else printf(\"ODD\\n\");\n    return 0;\n}\n"
+ },
+ {
+  "id": 2031,
+  "topic": "选择结构",
+  "title": "判断正负零",
+  "difficulty": "简单",
+  "tags": [
+   "选择结构",
+   "if-else"
+  ],
+  "description": [
+   "读入一个整数，判断它是正数、负数还是零。"
+  ],
+  "input_description": "一行一个整数 n。",
+  "output_description": "正数输出 positive，负数输出 negative，零输出 zero。",
+  "constraints": [
+   "-1000000 <= n <= 1000000"
+  ],
+  "cases": [
+   {
+    "input": "5\n",
+    "output": "positive\n",
+    "is_sample": true
+   },
+   {
+    "input": "-3\n",
+    "output": "negative\n",
+    "is_sample": false
+   },
+   {
+    "input": "0\n",
+    "output": "zero\n",
+    "is_sample": false
+   },
+   {
+    "input": "-1\n",
+    "output": "negative\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    long long n;\n    scanf(\"%lld\", &n);\n    if (n > 0) printf(\"positive\\n\");\n    else if (n < 0) printf(\"negative\\n\");\n    else printf(\"zero\\n\");\n    return 0;\n}\n"
+ },
+ {
+  "id": 2032,
+  "topic": "选择结构",
+  "title": "判断闰年",
+  "difficulty": "简单",
+  "tags": [
+   "选择结构",
+   "逻辑运算"
+  ],
+  "description": [
+   "读入年份，判断是否为闰年。能被 4 整除且不能被 100 整除，或能被 400 整除的年份是闰年。"
+  ],
+  "input_description": "一行一个整数 year。",
+  "output_description": "闰年输出 YES，否则输出 NO。",
+  "constraints": [
+   "1 <= year <= 9999"
+  ],
+  "cases": [
+   {
+    "input": "2024\n",
+    "output": "YES\n",
+    "is_sample": true
+   },
+   {
+    "input": "1900\n",
+    "output": "NO\n",
+    "is_sample": false
+   },
+   {
+    "input": "2000\n",
+    "output": "YES\n",
+    "is_sample": false
+   },
+   {
+    "input": "2023\n",
+    "output": "NO\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int y;\n    scanf(\"%d\", &y);\n    if ((y % 4 == 0 && y % 100 != 0) || y % 400 == 0) printf(\"YES\\n\");\n    else printf(\"NO\\n\");\n    return 0;\n}\n"
+ },
+ {
+  "id": 2033,
+  "topic": "选择结构",
+  "title": "三个数的最大值",
+  "difficulty": "简单",
+  "tags": [
+   "选择结构",
+   "嵌套判断"
+  ],
+  "description": [
+   "读入三个整数，输出其中的最大值。"
+  ],
+  "input_description": "一行三个整数 a、b、c。",
+  "output_description": "输出一个整数，表示最大值。",
+  "constraints": [
+   "-1000000 <= a, b, c <= 1000000"
+  ],
+  "cases": [
+   {
+    "input": "1 5 3\n",
+    "output": "5\n",
+    "is_sample": true
+   },
+   {
+    "input": "-1 -5 -3\n",
+    "output": "-1\n",
+    "is_sample": false
+   },
+   {
+    "input": "7 7 7\n",
+    "output": "7\n",
+    "is_sample": false
+   },
+   {
+    "input": "100 2 99\n",
+    "output": "100\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    long long a, b, c, m;\n    scanf(\"%lld %lld %lld\", &a, &b, &c);\n    m = a;\n    if (b > m) m = b;\n    if (c > m) m = c;\n    printf(\"%lld\\n\", m);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2034,
+  "topic": "选择结构",
+  "title": "成绩等级",
+  "difficulty": "简单",
+  "tags": [
+   "选择结构",
+   "多分支"
+  ],
+  "description": [
+   "读入整数成绩（0 到 100），按 90 及以上 A、80 到 89 B、70 到 79 C、60 到 69 D、60 以下 E 输出等级。"
+  ],
+  "input_description": "一行一个整数 score。",
+  "output_description": "输出一个大写字母等级。",
+  "constraints": [
+   "0 <= score <= 100"
+  ],
+  "cases": [
+   {
+    "input": "95\n",
+    "output": "A\n",
+    "is_sample": true
+   },
+   {
+    "input": "80\n",
+    "output": "B\n",
+    "is_sample": false
+   },
+   {
+    "input": "59\n",
+    "output": "E\n",
+    "is_sample": false
+   },
+   {
+    "input": "100\n",
+    "output": "A\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int s;\n    scanf(\"%d\", &s);\n    if (s >= 90) printf(\"A\\n\");\n    else if (s >= 80) printf(\"B\\n\");\n    else if (s >= 70) printf(\"C\\n\");\n    else if (s >= 60) printf(\"D\\n\");\n    else printf(\"E\\n\");\n    return 0;\n}\n"
+ },
+ {
+  "id": 2035,
+  "topic": "选择结构",
+  "title": "三角形判定",
+  "difficulty": "中等",
+  "tags": [
+   "选择结构",
+   "逻辑运算"
+  ],
+  "description": [
+   "读入三条边长，判断能否构成三角形。"
+  ],
+  "input_description": "一行三个正整数 a、b、c。",
+  "output_description": "能构成三角形输出 YES，否则输出 NO。",
+  "constraints": [
+   "1 <= 边长 <= 1000"
+  ],
+  "cases": [
+   {
+    "input": "3 4 5\n",
+    "output": "YES\n",
+    "is_sample": true
+   },
+   {
+    "input": "1 2 3\n",
+    "output": "NO\n",
+    "is_sample": false
+   },
+   {
+    "input": "5 5 5\n",
+    "output": "YES\n",
+    "is_sample": false
+   },
+   {
+    "input": "2 2 5\n",
+    "output": "NO\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int a, b, c;\n    scanf(\"%d %d %d\", &a, &b, &c);\n    if (a + b > c && a + c > b && b + c > a) printf(\"YES\\n\");\n    else printf(\"NO\\n\");\n    return 0;\n}\n"
+ },
+ {
+  "id": 2036,
+  "topic": "选择结构",
+  "title": "分段函数求值",
+  "difficulty": "中等",
+  "tags": [
+   "选择结构",
+   "分段函数"
+  ],
+  "description": [
+   "按下述规则计算 f(x)：x < 0 时 f(x) = -x；0 <= x < 10 时 f(x) = x²；x >= 10 时 f(x) = 2x + 1。输出 f(x)。"
+  ],
+  "input_description": "一行一个整数 x。",
+  "output_description": "输出一个整数，表示 f(x)。",
+  "constraints": [
+   "-1000 <= x <= 1000"
+  ],
+  "cases": [
+   {
+    "input": "-5\n",
+    "output": "5\n",
+    "is_sample": true
+   },
+   {
+    "input": "3\n",
+    "output": "9\n",
+    "is_sample": false
+   },
+   {
+    "input": "10\n",
+    "output": "21\n",
+    "is_sample": false
+   },
+   {
+    "input": "0\n",
+    "output": "0\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    long long x;\n    scanf(\"%lld\", &x);\n    if (x < 0) printf(\"%lld\\n\", -x);\n    else if (x < 10) printf(\"%lld\\n\", x * x);\n    else printf(\"%lld\\n\", 2 * x + 1);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2037,
+  "topic": "选择结构",
+  "title": "字符类型判断",
+  "difficulty": "中等",
+  "tags": [
+   "选择结构",
+   "字符判断"
+  ],
+  "description": [
+   "读入一个字符，判断它属于大写字母、小写字母、数字还是其他字符。"
+  ],
+  "input_description": "一行一个字符。",
+  "output_description": "分别输出 UPPER、LOWER、DIGIT、OTHER。",
+  "constraints": [
+   "字符为可见 ASCII 字符"
+  ],
+  "cases": [
+   {
+    "input": "A\n",
+    "output": "UPPER\n",
+    "is_sample": true
+   },
+   {
+    "input": "z\n",
+    "output": "LOWER\n",
+    "is_sample": false
+   },
+   {
+    "input": "7\n",
+    "output": "DIGIT\n",
+    "is_sample": false
+   },
+   {
+    "input": "#\n",
+    "output": "OTHER\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    char c;\n    scanf(\"%c\", &c);\n    if (c >= 'A' && c <= 'Z') printf(\"UPPER\\n\");\n    else if (c >= 'a' && c <= 'z') printf(\"LOWER\\n\");\n    else if (c >= '0' && c <= '9') printf(\"DIGIT\\n\");\n    else printf(\"OTHER\\n\");\n    return 0;\n}\n"
+ },
+ {
+  "id": 2038,
+  "topic": "选择结构",
+  "title": "简易计算器",
+  "difficulty": "困难",
+  "tags": [
+   "选择结构",
+   "switch"
+  ],
+  "description": [
+   "读入两个整数和一个运算符（+、-、*、/），输出运算结果。除数为 0 时输出 ERROR，除法按整数除法。"
+  ],
+  "input_description": "一行两个整数和一个运算符，用空格分隔。",
+  "output_description": "输出一个整数结果，或 ERROR。",
+  "constraints": [
+   "-10000 <= 操作数 <= 10000"
+  ],
+  "cases": [
+   {
+    "input": "7 + 3\n",
+    "output": "10\n",
+    "is_sample": true
+   },
+   {
+    "input": "7 / 0\n",
+    "output": "ERROR\n",
+    "is_sample": false
+   },
+   {
+    "input": "6 * 7\n",
+    "output": "42\n",
+    "is_sample": false
+   },
+   {
+    "input": "-9 / 2\n",
+    "output": "-4\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    long long a, b;\n    char op;\n    scanf(\"%lld %c %lld\", &a, &op, &b);\n    switch (op) {\n        case '+': printf(\"%lld\\n\", a + b); break;\n        case '-': printf(\"%lld\\n\", a - b); break;\n        case '*': printf(\"%lld\\n\", a * b); break;\n        case '/':\n            if (b == 0) printf(\"ERROR\\n\");\n            else printf(\"%lld\\n\", a / b);\n            break;\n        default: printf(\"ERROR\\n\");\n    }\n    return 0;\n}\n"
+ },
+ {
+  "id": 2039,
+  "topic": "选择结构",
+  "title": "日期合法性判断",
+  "difficulty": "困难",
+  "tags": [
+   "选择结构",
+   "综合判断"
+  ],
+  "description": [
+   "读入年、月、日，判断这个日期是否合法（考虑闰年与每月天数）。"
+  ],
+  "input_description": "一行三个整数 y、m、d。",
+  "output_description": "合法输出 YES，否则输出 NO。",
+  "constraints": [
+   "1 <= y <= 9999",
+   "1 <= m <= 12",
+   "1 <= d <= 31"
+  ],
+  "cases": [
+   {
+    "input": "2024 2 29\n",
+    "output": "YES\n",
+    "is_sample": true
+   },
+   {
+    "input": "2023 2 29\n",
+    "output": "NO\n",
+    "is_sample": false
+   },
+   {
+    "input": "2024 4 31\n",
+    "output": "NO\n",
+    "is_sample": false
+   },
+   {
+    "input": "2000 12 31\n",
+    "output": "YES\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int y, m, d, days;\n    scanf(\"%d %d %d\", &y, &m, &d);\n    if (m < 1 || m > 12 || d < 1) { printf(\"NO\\n\"); return 0; }\n    if (m == 2) days = ((y % 4 == 0 && y % 100 != 0) || y % 400 == 0) ? 29 : 28;\n    else if (m == 4 || m == 6 || m == 9 || m == 11) days = 30;\n    else days = 31;\n    printf(d <= days ? \"YES\\n\" : \"NO\\n\");\n    return 0;\n}\n"
+ },
+ {
+  "id": 2040,
+  "topic": "循环结构",
+  "title": "1 到 n 求和",
+  "difficulty": "简单",
+  "tags": [
+   "循环结构",
+   "for"
+  ],
+  "description": [
+   "读入正整数 n，输出 1 到 n 的和。"
+  ],
+  "input_description": "一行一个正整数 n。",
+  "output_description": "输出一个整数，表示求和结果。",
+  "constraints": [
+   "1 <= n <= 1000000"
+  ],
+  "cases": [
+   {
+    "input": "10\n",
+    "output": "55\n",
+    "is_sample": true
+   },
+   {
+    "input": "1\n",
+    "output": "1\n",
+    "is_sample": false
+   },
+   {
+    "input": "100\n",
+    "output": "5050\n",
+    "is_sample": false
+   },
+   {
+    "input": "1000\n",
+    "output": "500500\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    long long n, sum = 0, i;\n    scanf(\"%lld\", &n);\n    for (i = 1; i <= n; i++) sum += i;\n    printf(\"%lld\\n\", sum);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2041,
+  "topic": "循环结构",
+  "title": "n 的阶乘",
+  "difficulty": "简单",
+  "tags": [
+   "循环结构",
+   "累乘"
+  ],
+  "description": [
+   "读入正整数 n（n <= 20），输出 n 的阶乘。"
+  ],
+  "input_description": "一行一个正整数 n。",
+  "output_description": "输出 n!。",
+  "constraints": [
+   "1 <= n <= 20"
+  ],
+  "cases": [
+   {
+    "input": "5\n",
+    "output": "120\n",
+    "is_sample": true
+   },
+   {
+    "input": "1\n",
+    "output": "1\n",
+    "is_sample": false
+   },
+   {
+    "input": "10\n",
+    "output": "3628800\n",
+    "is_sample": false
+   },
+   {
+    "input": "20\n",
+    "output": "2432902008176640000\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int n, i;\n    unsigned long long f = 1;\n    scanf(\"%d\", &n);\n    for (i = 2; i <= n; i++) f *= i;\n    printf(\"%llu\\n\", f);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2042,
+  "topic": "循环结构",
+  "title": "输出 1 到 n",
+  "difficulty": "简单",
+  "tags": [
+   "循环结构",
+   "输出"
+  ],
+  "description": [
+   "读入正整数 n，按从小到大的顺序输出 1 到 n，每个数之间用一个空格分隔。"
+  ],
+  "input_description": "一行一个正整数 n。",
+  "output_description": "输出一行，包含 1 到 n。",
+  "constraints": [
+   "1 <= n <= 1000"
+  ],
+  "cases": [
+   {
+    "input": "5\n",
+    "output": "1 2 3 4 5\n",
+    "is_sample": true
+   },
+   {
+    "input": "1\n",
+    "output": "1\n",
+    "is_sample": false
+   },
+   {
+    "input": "10\n",
+    "output": "1 2 3 4 5 6 7 8 9 10\n",
+    "is_sample": false
+   },
+   {
+    "input": "3\n",
+    "output": "1 2 3\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int n, i;\n    scanf(\"%d\", &n);\n    for (i = 1; i <= n; i++) printf(i == 1 ? \"%d\" : \" %d\", i);\n    printf(\"\\n\");\n    return 0;\n}\n"
+ },
+ {
+  "id": 2043,
+  "topic": "循环结构",
+  "title": "最大公约数",
+  "difficulty": "简单",
+  "tags": [
+   "循环结构",
+   "辗转相除"
+  ],
+  "description": [
+   "读入两个正整数，用辗转相除法求它们的最大公约数。"
+  ],
+  "input_description": "一行两个正整数 a、b。",
+  "output_description": "输出一个整数，表示最大公约数。",
+  "constraints": [
+   "1 <= a, b <= 1000000"
+  ],
+  "cases": [
+   {
+    "input": "12 18\n",
+    "output": "6\n",
+    "is_sample": true
+   },
+   {
+    "input": "7 13\n",
+    "output": "1\n",
+    "is_sample": false
+   },
+   {
+    "input": "100 75\n",
+    "output": "25\n",
+    "is_sample": false
+   },
+   {
+    "input": "1 999999\n",
+    "output": "1\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    long long a, b, t;\n    scanf(\"%lld %lld\", &a, &b);\n    while (b != 0) { t = a % b; a = b; b = t; }\n    printf(\"%lld\\n\", a);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2044,
+  "topic": "循环结构",
+  "title": "素数判断",
+  "difficulty": "中等",
+  "tags": [
+   "循环结构",
+   "素数"
+  ],
+  "description": [
+   "读入一个正整数 n（n >= 2），判断它是否为素数。"
+  ],
+  "input_description": "一行一个正整数 n。",
+  "output_description": "是素数输出 YES，否则输出 NO。",
+  "constraints": [
+   "2 <= n <= 1000000"
+  ],
+  "cases": [
+   {
+    "input": "17\n",
+    "output": "YES\n",
+    "is_sample": true
+   },
+   {
+    "input": "18\n",
+    "output": "NO\n",
+    "is_sample": false
+   },
+   {
+    "input": "2\n",
+    "output": "YES\n",
+    "is_sample": false
+   },
+   {
+    "input": "999983\n",
+    "output": "YES\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    long long n, i;\n    int prime = 1;\n    scanf(\"%lld\", &n);\n    if (n < 2) prime = 0;\n    for (i = 2; i * i <= n; i++) {\n        if (n % i == 0) { prime = 0; break; }\n    }\n    printf(prime ? \"YES\\n\" : \"NO\\n\");\n    return 0;\n}\n"
+ },
+ {
+  "id": 2045,
+  "topic": "循环结构",
+  "title": "n 个数的最大值",
+  "difficulty": "中等",
+  "tags": [
+   "循环结构",
+   "最值"
+  ],
+  "description": [
+   "第一行读入整数 n，第二行读入 n 个整数，输出其中的最大值。"
+  ],
+  "input_description": "第一行一个正整数 n；第二行 n 个整数。",
+  "output_description": "输出一个整数，表示最大值。",
+  "constraints": [
+   "1 <= n <= 1000",
+   "|数值| <= 1000000"
+  ],
+  "cases": [
+   {
+    "input": "5\n3 9 -2 7 1\n",
+    "output": "9\n",
+    "is_sample": true
+   },
+   {
+    "input": "1\n42\n",
+    "output": "42\n",
+    "is_sample": false
+   },
+   {
+    "input": "4\n-5 -1 -9 -3\n",
+    "output": "-1\n",
+    "is_sample": false
+   },
+   {
+    "input": "3\n1000000 0 -1000000\n",
+    "output": "1000000\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int n, i;\n    long long x, best;\n    scanf(\"%d\", &n);\n    scanf(\"%lld\", &best);\n    for (i = 1; i < n; i++) {\n        scanf(\"%lld\", &x);\n        if (x > best) best = x;\n    }\n    printf(\"%lld\\n\", best);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2046,
+  "topic": "循环结构",
+  "title": "整数反转",
+  "difficulty": "中等",
+  "tags": [
+   "循环结构",
+   "数位处理"
+  ],
+  "description": [
+   "读入一个非负整数，输出它各位数字反转后的整数，前导零不输出。"
+  ],
+  "input_description": "一行一个非负整数 n。",
+  "output_description": "输出反转后的整数。",
+  "constraints": [
+   "0 <= n <= 1000000000"
+  ],
+  "cases": [
+   {
+    "input": "12345\n",
+    "output": "54321\n",
+    "is_sample": true
+   },
+   {
+    "input": "1200\n",
+    "output": "21\n",
+    "is_sample": false
+   },
+   {
+    "input": "0\n",
+    "output": "0\n",
+    "is_sample": false
+   },
+   {
+    "input": "1000000000\n",
+    "output": "1\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    long long n, r = 0;\n    scanf(\"%lld\", &n);\n    while (n > 0) { r = r * 10 + n % 10; n /= 10; }\n    printf(\"%lld\\n\", r);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2047,
+  "topic": "循环结构",
+  "title": "乘法表前 n 行",
+  "difficulty": "中等",
+  "tags": [
+   "循环结构",
+   "嵌套循环"
+  ],
+  "description": [
+   "读入 n，输出九九乘法表的前 n 行。第 i 行输出 i 个等式，格式为 a*b=c，等式之间用一个空格分隔。"
+  ],
+  "input_description": "一行一个整数 n。",
+  "output_description": "输出 n 行，第 i 行有 i 个等式。",
+  "constraints": [
+   "1 <= n <= 9"
+  ],
+  "cases": [
+   {
+    "input": "3\n",
+    "output": "1*1=1\n2*1=2 2*2=4\n3*1=3 3*2=6 3*3=9\n",
+    "is_sample": true
+   },
+   {
+    "input": "1\n",
+    "output": "1*1=1\n",
+    "is_sample": false
+   },
+   {
+    "input": "5\n",
+    "output": "1*1=1\n2*1=2 2*2=4\n3*1=3 3*2=6 3*3=9\n4*1=4 4*2=8 4*3=12 4*4=16\n5*1=5 5*2=10 5*3=15 5*4=20 5*5=25\n",
+    "is_sample": false
+   },
+   {
+    "input": "9\n",
+    "output": "1*1=1\n2*1=2 2*2=4\n3*1=3 3*2=6 3*3=9\n4*1=4 4*2=8 4*3=12 4*4=16\n5*1=5 5*2=10 5*3=15 5*4=20 5*5=25\n6*1=6 6*2=12 6*3=18 6*4=24 6*5=30 6*6=36\n7*1=7 7*2=14 7*3=21 7*4=28 7*5=35 7*6=42 7*7=49\n8*1=8 8*2=16 8*3=24 8*4=32 8*5=40 8*6=48 8*7=56 8*8=64\n9*1=9 9*2=18 9*3=27 9*4=36 9*5=45 9*6=54 9*7=63 9*8=72 9*9=81\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int n, i, j;\n    scanf(\"%d\", &n);\n    for (i = 1; i <= n; i++) {\n        for (j = 1; j <= i; j++) {\n            printf(j == 1 ? \"%d*%d=%d\" : \" %d*%d=%d\", i, j, i * j);\n        }\n        printf(\"\\n\");\n    }\n    return 0;\n}\n"
+ },
+ {
+  "id": 2048,
+  "topic": "循环结构",
+  "title": "水仙花数",
+  "difficulty": "困难",
+  "tags": [
+   "循环结构",
+   "枚举"
+  ],
+  "description": [
+   "输出所有三位水仙花数，即各位数字立方和等于该数本身的三位数，每行一个，按从小到大排列。"
+  ],
+  "input_description": "无输入。",
+  "output_description": "每行一个三位水仙花数。",
+  "constraints": [
+   "无"
+  ],
+  "cases": [
+   {
+    "input": "\n",
+    "output": "153\n370\n371\n407\n",
+    "is_sample": true
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int n, a, b, c;\n    for (n = 100; n <= 999; n++) {\n        a = n / 100; b = n / 10 % 10; c = n % 10;\n        if (a * a * a + b * b * b + c * c * c == n) printf(\"%d\\n\", n);\n    }\n    return 0;\n}\n"
+ },
+ {
+  "id": 2049,
+  "topic": "循环结构",
+  "title": "打印菱形",
+  "difficulty": "困难",
+  "tags": [
+   "循环结构",
+   "嵌套循环"
+  ],
+  "description": [
+   "读入奇数 n，输出一个由星号组成的菱形，共 n 行，上半部分逐步变宽、下半部分逐步变窄。"
+  ],
+  "input_description": "一行一个奇数 n。",
+  "output_description": "输出 n 行星号菱形，每行前后无多余空格。",
+  "constraints": [
+   "1 <= n <= 51 且 n 为奇数"
+  ],
+  "cases": [
+   {
+    "input": "5\n",
+    "output": "  *\n ***\n*****\n ***\n  *\n",
+    "is_sample": true
+   },
+   {
+    "input": "1\n",
+    "output": "*\n",
+    "is_sample": false
+   },
+   {
+    "input": "3\n",
+    "output": " *\n***\n *\n",
+    "is_sample": false
+   },
+   {
+    "input": "7\n",
+    "output": "   *\n  ***\n *****\n*******\n *****\n  ***\n   *\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int n, i, j, stars, spaces;\n    scanf(\"%d\", &n);\n    for (i = 1; i <= n; i++) {\n        stars = i <= (n + 1) / 2 ? 2 * i - 1 : 2 * (n - i + 1) - 1;\n        spaces = (n - stars) / 2;\n        for (j = 0; j < spaces; j++) printf(\" \");\n        for (j = 0; j < stars; j++) printf(\"*\");\n        printf(\"\\n\");\n    }\n    return 0;\n}\n"
+ },
+ {
+  "id": 2050,
+  "topic": "数组与字符串",
+  "title": "数组求和与平均",
+  "difficulty": "简单",
+  "tags": [
+   "数组与字符串",
+   "一维数组"
+  ],
+  "description": [
+   "第一行读入 n，第二行读入 n 个整数。输出它们的和以及平均值（保留两位小数）。"
+  ],
+  "input_description": "第一行正整数 n；第二行 n 个整数。",
+  "output_description": "输出一行：和（整数）与平均值（保留两位小数）。",
+  "constraints": [
+   "1 <= n <= 1000",
+   "|数值| <= 10000"
+  ],
+  "cases": [
+   {
+    "input": "5\n1 2 3 4 5\n",
+    "output": "15 3.00\n",
+    "is_sample": true
+   },
+   {
+    "input": "1\n7\n",
+    "output": "7 7.00\n",
+    "is_sample": false
+   },
+   {
+    "input": "4\n10 -10 3 7\n",
+    "output": "10 2.50\n",
+    "is_sample": false
+   },
+   {
+    "input": "3\n0 0 0\n",
+    "output": "0 0.00\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int n, i, x;\n    long long sum = 0;\n    scanf(\"%d\", &n);\n    for (i = 0; i < n; i++) { scanf(\"%d\", &x); sum += x; }\n    printf(\"%lld %.2f\\n\", sum, (double) sum / n);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2051,
+  "topic": "数组与字符串",
+  "title": "数组最大值及下标",
+  "difficulty": "简单",
+  "tags": [
+   "数组与字符串",
+   "最值"
+  ],
+  "description": [
+   "第一行读入 n，第二行读入 n 个整数。输出最大值及其第一次出现的下标（下标从 0 开始）。"
+  ],
+  "input_description": "第一行正整数 n；第二行 n 个整数。",
+  "output_description": "输出一行两个整数：最大值、下标。",
+  "constraints": [
+   "1 <= n <= 1000",
+   "|数值| <= 1000000"
+  ],
+  "cases": [
+   {
+    "input": "5\n3 9 9 2 1\n",
+    "output": "9 1\n",
+    "is_sample": true
+   },
+   {
+    "input": "1\n-4\n",
+    "output": "-4 0\n",
+    "is_sample": false
+   },
+   {
+    "input": "4\n7 7 7 7\n",
+    "output": "7 0\n",
+    "is_sample": false
+   },
+   {
+    "input": "3\n-9 -2 -5\n",
+    "output": "-2 1\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int n, i, a[1005], pos = 0;\n    scanf(\"%d\", &n);\n    for (i = 0; i < n; i++) scanf(\"%d\", &a[i]);\n    for (i = 1; i < n; i++) if (a[i] > a[pos]) pos = i;\n    printf(\"%d %d\\n\", a[pos], pos);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2052,
+  "topic": "数组与字符串",
+  "title": "数组逆序输出",
+  "difficulty": "简单",
+  "tags": [
+   "数组与字符串",
+   "数组遍历"
+  ],
+  "description": [
+   "第一行读入 n，第二行读入 n 个整数，按相反顺序输出这些整数。"
+  ],
+  "input_description": "第一行正整数 n；第二行 n 个整数。",
+  "output_description": "输出一行，逆序的整数，用空格分隔。",
+  "constraints": [
+   "1 <= n <= 1000"
+  ],
+  "cases": [
+   {
+    "input": "5\n1 2 3 4 5\n",
+    "output": "5 4 3 2 1\n",
+    "is_sample": true
+   },
+   {
+    "input": "3\n7 8 9\n",
+    "output": "9 8 7\n",
+    "is_sample": false
+   },
+   {
+    "input": "1\n42\n",
+    "output": "42\n",
+    "is_sample": false
+   },
+   {
+    "input": "6\n1 1 2 2 3 3\n",
+    "output": "3 3 2 2 1 1\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int n, i, a[1005];\n    scanf(\"%d\", &n);\n    for (i = 0; i < n; i++) scanf(\"%d\", &a[i]);\n    for (i = n - 1; i >= 0; i--) printf(i == n - 1 ? \"%d\" : \" %d\", a[i]);\n    printf(\"\\n\");\n    return 0;\n}\n"
+ },
+ {
+  "id": 2053,
+  "topic": "数组与字符串",
+  "title": "字符串长度",
+  "difficulty": "简单",
+  "tags": [
+   "数组与字符串",
+   "字符数组"
+  ],
+  "description": [
+   "读入一个不含空格的字符串，输出它的长度（不使用 strlen）。"
+  ],
+  "input_description": "一行一个字符串。",
+  "output_description": "输出一个整数，表示长度。",
+  "constraints": [
+   "1 <= 长度 <= 1000"
+  ],
+  "cases": [
+   {
+    "input": "hello\n",
+    "output": "5\n",
+    "is_sample": true
+   },
+   {
+    "input": "C\n",
+    "output": "1\n",
+    "is_sample": false
+   },
+   {
+    "input": "abcdefg\n",
+    "output": "7\n",
+    "is_sample": false
+   },
+   {
+    "input": "12345\n",
+    "output": "5\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    char s[1005];\n    int len = 0;\n    scanf(\"%1004s\", s);\n    while (s[len] != '\\0') len++;\n    printf(\"%d\\n\", len);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2054,
+  "topic": "数组与字符串",
+  "title": "字符串反转",
+  "difficulty": "中等",
+  "tags": [
+   "数组与字符串",
+   "双指针"
+  ],
+  "description": [
+   "读入一个不含空格的字符串，输出反转后的字符串。"
+  ],
+  "input_description": "一行一个字符串。",
+  "output_description": "输出反转后的字符串。",
+  "constraints": [
+   "1 <= 长度 <= 1000"
+  ],
+  "cases": [
+   {
+    "input": "abc\n",
+    "output": "cba\n",
+    "is_sample": true
+   },
+   {
+    "input": "hello\n",
+    "output": "olleh\n",
+    "is_sample": false
+   },
+   {
+    "input": "x\n",
+    "output": "x\n",
+    "is_sample": false
+   },
+   {
+    "input": "12345\n",
+    "output": "54321\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\n#include <string.h>\nint main(void) {\n    char s[1005];\n    int i, n;\n    scanf(\"%1004s\", s);\n    n = (int) strlen(s);\n    for (i = 0; i < n / 2; i++) {\n        char t = s[i]; s[i] = s[n - 1 - i]; s[n - 1 - i] = t;\n    }\n    printf(\"%s\\n\", s);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2055,
+  "topic": "数组与字符串",
+  "title": "字符出现次数",
+  "difficulty": "中等",
+  "tags": [
+   "数组与字符串",
+   "计数"
+  ],
+  "description": [
+   "读入一个不含空格的字符串和一个字符，统计该字符在字符串中出现的次数。"
+  ],
+  "input_description": "第一行一个字符串；第二行一个字符。",
+  "output_description": "输出一个整数，表示出现次数。",
+  "constraints": [
+   "1 <= 长度 <= 1000"
+  ],
+  "cases": [
+   {
+    "input": "hello\nl\n",
+    "output": "2\n",
+    "is_sample": true
+   },
+   {
+    "input": "aaa\na\n",
+    "output": "3\n",
+    "is_sample": false
+   },
+   {
+    "input": "abc\nz\n",
+    "output": "0\n",
+    "is_sample": false
+   },
+   {
+    "input": "banana\nn\n",
+    "output": "2\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    char s[1005], c;\n    int i, count = 0;\n    scanf(\"%1004s\", s);\n    scanf(\" %c\", &c);\n    for (i = 0; s[i] != '\\0'; i++) if (s[i] == c) count++;\n    printf(\"%d\\n\", count);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2056,
+  "topic": "数组与字符串",
+  "title": "冒泡排序",
+  "difficulty": "中等",
+  "tags": [
+   "数组与字符串",
+   "排序"
+  ],
+  "description": [
+   "读入 n 个整数，使用冒泡排序按从小到大输出。"
+  ],
+  "input_description": "第一行正整数 n；第二行 n 个整数。",
+  "output_description": "输出一行排序后的整数，用空格分隔。",
+  "constraints": [
+   "1 <= n <= 1000",
+   "|数值| <= 100000"
+  ],
+  "cases": [
+   {
+    "input": "5\n5 1 4 2 3\n",
+    "output": "1 2 3 4 5\n",
+    "is_sample": true
+   },
+   {
+    "input": "3\n3 2 1\n",
+    "output": "1 2 3\n",
+    "is_sample": false
+   },
+   {
+    "input": "1\n9\n",
+    "output": "9\n",
+    "is_sample": false
+   },
+   {
+    "input": "6\n2 2 1 1 3 3\n",
+    "output": "1 1 2 2 3 3\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int n, i, j, a[1005], t;\n    scanf(\"%d\", &n);\n    for (i = 0; i < n; i++) scanf(\"%d\", &a[i]);\n    for (i = 0; i < n - 1; i++)\n        for (j = 0; j < n - 1 - i; j++)\n            if (a[j] > a[j + 1]) { t = a[j]; a[j] = a[j + 1]; a[j + 1] = t; }\n    for (i = 0; i < n; i++) printf(i == 0 ? \"%d\" : \" %d\", a[i]);\n    printf(\"\\n\");\n    return 0;\n}\n"
+ },
+ {
+  "id": 2057,
+  "topic": "数组与字符串",
+  "title": "二维数组转置",
+  "difficulty": "困难",
+  "tags": [
+   "数组与字符串",
+   "二维数组"
+  ],
+  "description": [
+   "读入 n 行 m 列的整数矩阵，输出它的转置矩阵（m 行 n 列）。"
+  ],
+  "input_description": "第一行两个正整数 n、m；之后 n 行，每行 m 个整数。",
+  "output_description": "输出 m 行，每行 n 个整数。",
+  "constraints": [
+   "1 <= n, m <= 50",
+   "|数值| <= 1000"
+  ],
+  "cases": [
+   {
+    "input": "2 3\n1 2 3\n4 5 6\n",
+    "output": "1 4\n2 5\n3 6\n",
+    "is_sample": true
+   },
+   {
+    "input": "1 1\n7\n",
+    "output": "7\n",
+    "is_sample": false
+   },
+   {
+    "input": "3 2\n1 2\n3 4\n5 6\n",
+    "output": "1 3 5\n2 4 6\n",
+    "is_sample": false
+   },
+   {
+    "input": "2 2\n-1 0\n0 -1\n",
+    "output": "-1 0\n0 -1\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int n, m, i, j, a[55][55];\n    scanf(\"%d %d\", &n, &m);\n    for (i = 0; i < n; i++) for (j = 0; j < m; j++) scanf(\"%d\", &a[i][j]);\n    for (j = 0; j < m; j++) {\n        for (i = 0; i < n; i++) printf(i == 0 ? \"%d\" : \" %d\", a[i][j]);\n        printf(\"\\n\");\n    }\n    return 0;\n}\n"
+ },
+ {
+  "id": 2058,
+  "topic": "数组与字符串",
+  "title": "回文字符串判断",
+  "difficulty": "困难",
+  "tags": [
+   "数组与字符串",
+   "双指针"
+  ],
+  "description": [
+   "读入一个不含空格的字符串，判断它是否为回文（正读与反读相同）。"
+  ],
+  "input_description": "一行一个字符串。",
+  "output_description": "是回文输出 YES，否则输出 NO。",
+  "constraints": [
+   "1 <= 长度 <= 1000"
+  ],
+  "cases": [
+   {
+    "input": "level\n",
+    "output": "YES\n",
+    "is_sample": true
+   },
+   {
+    "input": "hello\n",
+    "output": "NO\n",
+    "is_sample": false
+   },
+   {
+    "input": "a\n",
+    "output": "YES\n",
+    "is_sample": false
+   },
+   {
+    "input": "abba\n",
+    "output": "YES\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\n#include <string.h>\nint main(void) {\n    char s[1005];\n    int i, n, ok = 1;\n    scanf(\"%1004s\", s);\n    n = (int) strlen(s);\n    for (i = 0; i < n / 2; i++) if (s[i] != s[n - 1 - i]) { ok = 0; break; }\n    printf(ok ? \"YES\\n\" : \"NO\\n\");\n    return 0;\n}\n"
+ },
+ {
+  "id": 2059,
+  "topic": "数组与字符串",
+  "title": "统计单词个数",
+  "difficulty": "困难",
+  "tags": [
+   "数组与字符串",
+   "字符串处理"
+  ],
+  "description": [
+   "读入一行英文文本（可能含多个空格），统计其中单词的个数。单词由连续的非空格字符组成。"
+  ],
+  "input_description": "一行文本，长度不超过 500。",
+  "output_description": "输出一个整数，表示单词个数。",
+  "constraints": [
+   "文本只含字母、数字和空格"
+  ],
+  "cases": [
+   {
+    "input": "hello world\n",
+    "output": "2\n",
+    "is_sample": true
+   },
+   {
+    "input": "  a   bb  ccc \n",
+    "output": "3\n",
+    "is_sample": false
+   },
+   {
+    "input": "one\n",
+    "output": "1\n",
+    "is_sample": false
+   },
+   {
+    "input": "a b c d e\n",
+    "output": "5\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\n#include <string.h>\nint main(void) {\n    char line[512];\n    int i, count = 0, in_word = 0;\n    if (fgets(line, sizeof(line), stdin) == NULL) { printf(\"0\\n\"); return 0; }\n    for (i = 0; line[i] != '\\0'; i++) {\n        if (line[i] == ' ' || line[i] == '\\n' || line[i] == '\\r' || line[i] == '\\t') in_word = 0;\n        else if (!in_word) { in_word = 1; count++; }\n    }\n    printf(\"%d\\n\", count);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2060,
+  "topic": "函数",
+  "title": "函数求最大值",
+  "difficulty": "简单",
+  "tags": [
+   "函数",
+   "函数定义"
+  ],
+  "description": [
+   "编写函数 int max2(int a, int b) 返回较大值。读入两个整数，输出较大值。"
+  ],
+  "input_description": "一行两个整数。",
+  "output_description": "输出一个整数，表示较大值。",
+  "constraints": [
+   "|数值| <= 1000000"
+  ],
+  "cases": [
+   {
+    "input": "3 8\n",
+    "output": "8\n",
+    "is_sample": true
+   },
+   {
+    "input": "-5 -2\n",
+    "output": "-2\n",
+    "is_sample": false
+   },
+   {
+    "input": "7 7\n",
+    "output": "7\n",
+    "is_sample": false
+   },
+   {
+    "input": "1000000 -1000000\n",
+    "output": "1000000\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint max2(int a, int b) { return a > b ? a : b; }\nint main(void) {\n    int a, b;\n    scanf(\"%d %d\", &a, &b);\n    printf(\"%d\\n\", max2(a, b));\n    return 0;\n}\n"
+ },
+ {
+  "id": 2061,
+  "topic": "函数",
+  "title": "函数求阶乘",
+  "difficulty": "简单",
+  "tags": [
+   "函数",
+   "返回值"
+  ],
+  "description": [
+   "编写函数 long long fact(int n) 计算 n!。读入 n（n <= 20），输出 n!。"
+  ],
+  "input_description": "一行一个正整数 n。",
+  "output_description": "输出 n!。",
+  "constraints": [
+   "1 <= n <= 20"
+  ],
+  "cases": [
+   {
+    "input": "5\n",
+    "output": "120\n",
+    "is_sample": true
+   },
+   {
+    "input": "1\n",
+    "output": "1\n",
+    "is_sample": false
+   },
+   {
+    "input": "10\n",
+    "output": "3628800\n",
+    "is_sample": false
+   },
+   {
+    "input": "20\n",
+    "output": "2432902008176640000\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nunsigned long long fact(int n) {\n    unsigned long long f = 1;\n    int i;\n    for (i = 2; i <= n; i++) f *= i;\n    return f;\n}\nint main(void) {\n    int n;\n    scanf(\"%d\", &n);\n    printf(\"%llu\\n\", fact(n));\n    return 0;\n}\n"
+ },
+ {
+  "id": 2062,
+  "topic": "函数",
+  "title": "函数判断素数",
+  "difficulty": "简单",
+  "tags": [
+   "函数",
+   "布尔返回"
+  ],
+  "description": [
+   "编写函数 int is_prime(int n) 判断素数。读入 n >= 2，输出 YES 或 NO。"
+  ],
+  "input_description": "一行一个正整数 n。",
+  "output_description": "是素数输出 YES，否则输出 NO。",
+  "constraints": [
+   "2 <= n <= 1000000"
+  ],
+  "cases": [
+   {
+    "input": "13\n",
+    "output": "YES\n",
+    "is_sample": true
+   },
+   {
+    "input": "21\n",
+    "output": "NO\n",
+    "is_sample": false
+   },
+   {
+    "input": "2\n",
+    "output": "YES\n",
+    "is_sample": false
+   },
+   {
+    "input": "999983\n",
+    "output": "YES\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint is_prime(int n) {\n    int i;\n    if (n < 2) return 0;\n    for (i = 2; (long long) i * i <= n; i++) if (n % i == 0) return 0;\n    return 1;\n}\nint main(void) {\n    int n;\n    scanf(\"%d\", &n);\n    printf(is_prime(n) ? \"YES\\n\" : \"NO\\n\");\n    return 0;\n}\n"
+ },
+ {
+  "id": 2063,
+  "topic": "函数",
+  "title": "函数求最大公约数",
+  "difficulty": "简单",
+  "tags": [
+   "函数",
+   "参数传递"
+  ],
+  "description": [
+   "编写函数 int gcd(int a, int b)，读入两个正整数并输出最大公约数。"
+  ],
+  "input_description": "一行两个正整数。",
+  "output_description": "输出一个整数，表示最大公约数。",
+  "constraints": [
+   "1 <= a, b <= 1000000"
+  ],
+  "cases": [
+   {
+    "input": "24 36\n",
+    "output": "12\n",
+    "is_sample": true
+   },
+   {
+    "input": "7 5\n",
+    "output": "1\n",
+    "is_sample": false
+   },
+   {
+    "input": "100 100\n",
+    "output": "100\n",
+    "is_sample": false
+   },
+   {
+    "input": "999999 3\n",
+    "output": "3\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint gcd(int a, int b) { while (b) { int t = a % b; a = b; b = t; } return a; }\nint main(void) {\n    int a, b;\n    scanf(\"%d %d\", &a, &b);\n    printf(\"%d\\n\", gcd(a, b));\n    return 0;\n}\n"
+ },
+ {
+  "id": 2064,
+  "topic": "函数",
+  "title": "递归求斐波那契",
+  "difficulty": "中等",
+  "tags": [
+   "函数",
+   "递归"
+  ],
+  "description": [
+   "用递归函数计算斐波那契数列第 n 项（F(1)=1，F(2)=1，F(n)=F(n-1)+F(n-2)）。"
+  ],
+  "input_description": "一行一个正整数 n。",
+  "output_description": "输出 F(n)。",
+  "constraints": [
+   "1 <= n <= 35"
+  ],
+  "cases": [
+   {
+    "input": "1\n",
+    "output": "1\n",
+    "is_sample": true
+   },
+   {
+    "input": "10\n",
+    "output": "55\n",
+    "is_sample": false
+   },
+   {
+    "input": "20\n",
+    "output": "6765\n",
+    "is_sample": false
+   },
+   {
+    "input": "35\n",
+    "output": "9227465\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nlong long fib(int n) { return n <= 2 ? 1 : fib(n - 1) + fib(n - 2); }\nint main(void) {\n    int n;\n    scanf(\"%d\", &n);\n    printf(\"%lld\\n\", fib(n));\n    return 0;\n}\n"
+ },
+ {
+  "id": 2065,
+  "topic": "函数",
+  "title": "递归求阶乘和",
+  "difficulty": "中等",
+  "tags": [
+   "函数",
+   "递归"
+  ],
+  "description": [
+   "读入正整数 n，用递归计算 1! + 2! + … + n!。"
+  ],
+  "input_description": "一行一个正整数 n。",
+  "output_description": "输出一个整数，表示阶乘和。",
+  "constraints": [
+   "1 <= n <= 12"
+  ],
+  "cases": [
+   {
+    "input": "3\n",
+    "output": "9\n",
+    "is_sample": true
+   },
+   {
+    "input": "1\n",
+    "output": "1\n",
+    "is_sample": false
+   },
+   {
+    "input": "5\n",
+    "output": "153\n",
+    "is_sample": false
+   },
+   {
+    "input": "12\n",
+    "output": "522956313\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nunsigned long long fact(int n) { return n <= 1 ? 1 : n * fact(n - 1); }\nunsigned long long sum_fact(int n) { return n <= 1 ? 1 : fact(n) + sum_fact(n - 1); }\nint main(void) {\n    int n;\n    scanf(\"%d\", &n);\n    printf(\"%llu\\n\", sum_fact(n));\n    return 0;\n}\n"
+ },
+ {
+  "id": 2066,
+  "topic": "函数",
+  "title": "汉诺塔步数",
+  "difficulty": "中等",
+  "tags": [
+   "函数",
+   "递归"
+  ],
+  "description": [
+   "读入盘子数 n，输出把 n 个盘子从 A 移到 C 所需的最少步数。"
+  ],
+  "input_description": "一行一个正整数 n。",
+  "output_description": "输出一个整数，表示最少步数。",
+  "constraints": [
+   "1 <= n <= 60"
+  ],
+  "cases": [
+   {
+    "input": "1\n",
+    "output": "1\n",
+    "is_sample": true
+   },
+   {
+    "input": "3\n",
+    "output": "7\n",
+    "is_sample": false
+   },
+   {
+    "input": "10\n",
+    "output": "1023\n",
+    "is_sample": false
+   },
+   {
+    "input": "60\n",
+    "output": "1152921504606846975\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nunsigned long long hanoi(int n) { return n == 1 ? 1 : 2 * hanoi(n - 1) + 1; }\nint main(void) {\n    int n;\n    scanf(\"%d\", &n);\n    printf(\"%llu\\n\", hanoi(n));\n    return 0;\n}\n"
+ },
+ {
+  "id": 2067,
+  "topic": "函数",
+  "title": "函数实现整数幂",
+  "difficulty": "困难",
+  "tags": [
+   "函数",
+   "循环"
+  ],
+  "description": [
+   "编写函数 long long power(int base, int exp) 计算 base 的 exp 次方（exp >= 0，结果在 long long 范围内）。"
+  ],
+  "input_description": "一行两个整数 base 和 exp。",
+  "output_description": "输出 base^exp。",
+  "constraints": [
+   "1 <= base <= 10",
+   "0 <= exp <= 18"
+  ],
+  "cases": [
+   {
+    "input": "2 10\n",
+    "output": "1024\n",
+    "is_sample": true
+   },
+   {
+    "input": "5 0\n",
+    "output": "1\n",
+    "is_sample": false
+   },
+   {
+    "input": "10 18\n",
+    "output": "1000000000000000000\n",
+    "is_sample": false
+   },
+   {
+    "input": "3 7\n",
+    "output": "2187\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nlong long power(int base, int exp) {\n    long long r = 1;\n    int i;\n    for (i = 0; i < exp; i++) r *= base;\n    return r;\n}\nint main(void) {\n    int base, exp;\n    scanf(\"%d %d\", &base, &exp);\n    printf(\"%lld\\n\", power(base, exp));\n    return 0;\n}\n"
+ },
+ {
+  "id": 2068,
+  "topic": "函数",
+  "title": "递归求数字各位和",
+  "difficulty": "困难",
+  "tags": [
+   "函数",
+   "递归"
+  ],
+  "description": [
+   "读入一个非负整数，用递归计算各位数字之和。"
+  ],
+  "input_description": "一行一个非负整数 n。",
+  "output_description": "输出一位整数，表示各位数字之和。",
+  "constraints": [
+   "0 <= n <= 1000000000"
+  ],
+  "cases": [
+   {
+    "input": "12345\n",
+    "output": "15\n",
+    "is_sample": true
+   },
+   {
+    "input": "0\n",
+    "output": "0\n",
+    "is_sample": false
+   },
+   {
+    "input": "999\n",
+    "output": "27\n",
+    "is_sample": false
+   },
+   {
+    "input": "1000000000\n",
+    "output": "1\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint digit_sum(long long n) { return n == 0 ? 0 : (int) (n % 10) + digit_sum(n / 10); }\nint main(void) {\n    long long n;\n    scanf(\"%lld\", &n);\n    printf(\"%d\\n\", digit_sum(n));\n    return 0;\n}\n"
+ },
+ {
+  "id": 2069,
+  "topic": "函数",
+  "title": "递归求组合数",
+  "difficulty": "困难",
+  "tags": [
+   "函数",
+   "递归"
+  ],
+  "description": [
+   "读入 n 和 k（0 <= k <= n <= 20），用递归求组合数 C(n,k)。"
+  ],
+  "input_description": "一行两个整数 n、k。",
+  "output_description": "输出 C(n,k)。",
+  "constraints": [
+   "0 <= k <= n <= 20"
+  ],
+  "cases": [
+   {
+    "input": "5 2\n",
+    "output": "10\n",
+    "is_sample": true
+   },
+   {
+    "input": "10 0\n",
+    "output": "1\n",
+    "is_sample": false
+   },
+   {
+    "input": "20 10\n",
+    "output": "184756\n",
+    "is_sample": false
+   },
+   {
+    "input": "6 6\n",
+    "output": "1\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nunsigned long long comb(int n, int k) {\n    if (k == 0 || k == n) return 1;\n    return comb(n - 1, k - 1) + comb(n - 1, k);\n}\nint main(void) {\n    int n, k;\n    scanf(\"%d %d\", &n, &k);\n    printf(\"%llu\\n\", comb(n, k));\n    return 0;\n}\n"
+ },
+ {
+  "id": 2070,
+  "topic": "指针",
+  "title": "指针交换两个数",
+  "difficulty": "简单",
+  "tags": [
+   "指针",
+   "指针参数"
+  ],
+  "description": [
+   "编写函数 void swap(int *a, int *b) 交换两个整数。读入两个整数，输出交换后的值。"
+  ],
+  "input_description": "一行两个整数。",
+  "output_description": "输出一行两个整数，顺序为交换后的结果。",
+  "constraints": [
+   "|数值| <= 1000000"
+  ],
+  "cases": [
+   {
+    "input": "3 8\n",
+    "output": "8 3\n",
+    "is_sample": true
+   },
+   {
+    "input": "-1 -2\n",
+    "output": "-2 -1\n",
+    "is_sample": false
+   },
+   {
+    "input": "7 7\n",
+    "output": "7 7\n",
+    "is_sample": false
+   },
+   {
+    "input": "100 -100\n",
+    "output": "-100 100\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nvoid swap(int *a, int *b) { int t = *a; *a = *b; *b = t; }\nint main(void) {\n    int a, b;\n    scanf(\"%d %d\", &a, &b);\n    swap(&a, &b);\n    printf(\"%d %d\\n\", a, b);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2071,
+  "topic": "指针",
+  "title": "指针求数组最大值",
+  "difficulty": "简单",
+  "tags": [
+   "指针",
+   "数组与指针"
+  ],
+  "description": [
+   "读入 n 个整数，用指针遍历数组求最大值。"
+  ],
+  "input_description": "第一行正整数 n；第二行 n 个整数。",
+  "output_description": "输出一个整数，表示最大值。",
+  "constraints": [
+   "1 <= n <= 1000",
+   "|数值| <= 1000000"
+  ],
+  "cases": [
+   {
+    "input": "5\n3 9 -2 7 1\n",
+    "output": "9\n",
+    "is_sample": true
+   },
+   {
+    "input": "1\n5\n",
+    "output": "5\n",
+    "is_sample": false
+   },
+   {
+    "input": "4\n-9 -2 -7 -3\n",
+    "output": "-2\n",
+    "is_sample": false
+   },
+   {
+    "input": "3\n0 1000000 -5\n",
+    "output": "1000000\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int n, i, a[1005], best;\n    int *p;\n    scanf(\"%d\", &n);\n    for (i = 0; i < n; i++) scanf(\"%d\", &a[i]);\n    best = *a;\n    for (p = a + 1; p < a + n; p++) if (*p > best) best = *p;\n    printf(\"%d\\n\", best);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2072,
+  "topic": "指针",
+  "title": "指针遍历数组求和",
+  "difficulty": "简单",
+  "tags": [
+   "指针",
+   "指针运算"
+  ],
+  "description": [
+   "读入 n 个整数，用指针运算计算所有元素之和。"
+  ],
+  "input_description": "第一行正整数 n；第二行 n 个整数。",
+  "output_description": "输出一个整数，表示和。",
+  "constraints": [
+   "1 <= n <= 1000",
+   "|数值| <= 10000"
+  ],
+  "cases": [
+   {
+    "input": "5\n1 2 3 4 5\n",
+    "output": "15\n",
+    "is_sample": true
+   },
+   {
+    "input": "1\n9\n",
+    "output": "9\n",
+    "is_sample": false
+   },
+   {
+    "input": "4\n-1 -2 -3 -4\n",
+    "output": "-10\n",
+    "is_sample": false
+   },
+   {
+    "input": "3\n100 200 300\n",
+    "output": "600\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int n, i, a[1005];\n    long long sum = 0;\n    int *p;\n    scanf(\"%d\", &n);\n    for (i = 0; i < n; i++) scanf(\"%d\", &a[i]);\n    for (p = a; p < a + n; p++) sum += *p;\n    printf(\"%lld\\n\", sum);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2073,
+  "topic": "指针",
+  "title": "指针求字符串长度",
+  "difficulty": "中等",
+  "tags": [
+   "指针",
+   "字符指针"
+  ],
+  "description": [
+   "读入一个不含空格的字符串，用字符指针计算长度（不使用 strlen）。"
+  ],
+  "input_description": "一行一个字符串。",
+  "output_description": "输出一个整数，表示长度。",
+  "constraints": [
+   "1 <= 长度 <= 1000"
+  ],
+  "cases": [
+   {
+    "input": "abcde\n",
+    "output": "5\n",
+    "is_sample": true
+   },
+   {
+    "input": "a\n",
+    "output": "1\n",
+    "is_sample": false
+   },
+   {
+    "input": "hello world\n",
+    "output": "5\n",
+    "is_sample": false
+   },
+   {
+    "input": "0123456789\n",
+    "output": "10\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint my_strlen(const char *s) {\n    const char *p = s;\n    while (*p != '\\0') p++;\n    return (int) (p - s);\n}\nint main(void) {\n    char s[1005];\n    scanf(\"%1004s\", s);\n    printf(\"%d\\n\", my_strlen(s));\n    return 0;\n}\n"
+ },
+ {
+  "id": 2074,
+  "topic": "指针",
+  "title": "指针复制字符串",
+  "difficulty": "中等",
+  "tags": [
+   "指针",
+   "字符指针"
+  ],
+  "description": [
+   "读入一个不含空格的字符串，用指针把它复制到另一个数组后输出。"
+  ],
+  "input_description": "一行一个字符串。",
+  "output_description": "输出复制后的字符串。",
+  "constraints": [
+   "1 <= 长度 <= 500"
+  ],
+  "cases": [
+   {
+    "input": "hello\n",
+    "output": "hello\n",
+    "is_sample": true
+   },
+   {
+    "input": "C\n",
+    "output": "C\n",
+    "is_sample": false
+   },
+   {
+    "input": "pointer\n",
+    "output": "pointer\n",
+    "is_sample": false
+   },
+   {
+    "input": "1234567890\n",
+    "output": "1234567890\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nvoid my_strcpy(char *dst, const char *src) {\n    while ((*dst++ = *src++) != '\\0') { }\n}\nint main(void) {\n    char src[505], dst[505];\n    scanf(\"%504s\", src);\n    my_strcpy(dst, src);\n    printf(\"%s\\n\", dst);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2075,
+  "topic": "指针",
+  "title": "指针原地反转数组",
+  "difficulty": "中等",
+  "tags": [
+   "指针",
+   "双指针"
+  ],
+  "description": [
+   "读入 n 个整数，用两个指针从两端向中间交换，原地反转数组后输出。"
+  ],
+  "input_description": "第一行正整数 n；第二行 n 个整数。",
+  "output_description": "输出反转后的数组，用空格分隔。",
+  "constraints": [
+   "1 <= n <= 1000"
+  ],
+  "cases": [
+   {
+    "input": "5\n1 2 3 4 5\n",
+    "output": "5 4 3 2 1\n",
+    "is_sample": true
+   },
+   {
+    "input": "4\n9 8 7 6\n",
+    "output": "6 7 8 9\n",
+    "is_sample": false
+   },
+   {
+    "input": "1\n3\n",
+    "output": "3\n",
+    "is_sample": false
+   },
+   {
+    "input": "6\n1 1 2 2 3 3\n",
+    "output": "3 3 2 2 1 1\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int n, i, a[1005], *left, *right, t;\n    scanf(\"%d\", &n);\n    for (i = 0; i < n; i++) scanf(\"%d\", &a[i]);\n    left = a; right = a + n - 1;\n    while (left < right) { t = *left; *left = *right; *right = t; left++; right--; }\n    for (i = 0; i < n; i++) printf(i == 0 ? \"%d\" : \" %d\", a[i]);\n    printf(\"\\n\");\n    return 0;\n}\n"
+ },
+ {
+  "id": 2076,
+  "topic": "指针",
+  "title": "指针实现选择排序",
+  "difficulty": "困难",
+  "tags": [
+   "指针",
+   "排序"
+  ],
+  "description": [
+   "读入 n 个整数，用指针操作实现选择排序并从小到大输出。"
+  ],
+  "input_description": "第一行正整数 n；第二行 n 个整数。",
+  "output_description": "输出排序后的数组，用空格分隔。",
+  "constraints": [
+   "1 <= n <= 1000",
+   "|数值| <= 100000"
+  ],
+  "cases": [
+   {
+    "input": "5\n5 1 4 2 3\n",
+    "output": "1 2 3 4 5\n",
+    "is_sample": true
+   },
+   {
+    "input": "3\n3 2 1\n",
+    "output": "1 2 3\n",
+    "is_sample": false
+   },
+   {
+    "input": "1\n7\n",
+    "output": "7\n",
+    "is_sample": false
+   },
+   {
+    "input": "6\n2 2 1 1 3 3\n",
+    "output": "1 1 2 2 3 3\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int n, i, j, a[1005], *p, *q, *min, t;\n    scanf(\"%d\", &n);\n    for (i = 0; i < n; i++) scanf(\"%d\", &a[i]);\n    for (p = a; p < a + n - 1; p++) {\n        min = p;\n        for (q = p + 1; q < a + n; q++) if (*q < *min) min = q;\n        if (min != p) { t = *p; *p = *min; *min = t; }\n    }\n    for (i = 0; i < n; i++) printf(i == 0 ? \"%d\" : \" %d\", a[i]);\n    printf(\"\\n\");\n    return 0;\n}\n"
+ },
+ {
+  "id": 2077,
+  "topic": "指针",
+  "title": "指针返回最大最小",
+  "difficulty": "困难",
+  "tags": [
+   "指针",
+   "输出参数"
+  ],
+  "description": [
+   "编写函数 void min_max(int *a, int n, int *min, int *max)，读入 n 个整数后输出最小值和最大值。"
+  ],
+  "input_description": "第一行正整数 n；第二行 n 个整数。",
+  "output_description": "输出一行两个整数：最小值、最大值。",
+  "constraints": [
+   "1 <= n <= 1000",
+   "|数值| <= 1000000"
+  ],
+  "cases": [
+   {
+    "input": "5\n3 9 -2 7 1\n",
+    "output": "-2 9\n",
+    "is_sample": true
+   },
+   {
+    "input": "1\n5\n",
+    "output": "5 5\n",
+    "is_sample": false
+   },
+   {
+    "input": "4\n-9 -2 -7 -3\n",
+    "output": "-9 -2\n",
+    "is_sample": false
+   },
+   {
+    "input": "3\n0 1000000 -5\n",
+    "output": "-5 1000000\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nvoid min_max(int *a, int n, int *min, int *max) {\n    int i;\n    *min = *max = a[0];\n    for (i = 1; i < n; i++) {\n        if (a[i] < *min) *min = a[i];\n        if (a[i] > *max) *max = a[i];\n    }\n}\nint main(void) {\n    int n, i, a[1005], lo, hi;\n    scanf(\"%d\", &n);\n    for (i = 0; i < n; i++) scanf(\"%d\", &a[i]);\n    min_max(a, n, &lo, &hi);\n    printf(\"%d %d\\n\", lo, hi);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2078,
+  "topic": "指针",
+  "title": "指针统计大写字母",
+  "difficulty": "困难",
+  "tags": [
+   "指针",
+   "字符指针"
+  ],
+  "description": [
+   "读入一行文本，用字符指针统计其中大写字母的个数。"
+  ],
+  "input_description": "一行文本，长度不超过 500。",
+  "output_description": "输出一个整数，表示大写字母个数。",
+  "constraints": [
+   "文本可能包含空格"
+  ],
+  "cases": [
+   {
+    "input": "Hello World\n",
+    "output": "2\n",
+    "is_sample": true
+   },
+   {
+    "input": "ABC\n",
+    "output": "3\n",
+    "is_sample": false
+   },
+   {
+    "input": "abc\n",
+    "output": "0\n",
+    "is_sample": false
+   },
+   {
+    "input": "A1 B2 C3\n",
+    "output": "3\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\n#include <string.h>\nint main(void) {\n    char line[512];\n    const char *p;\n    int count = 0;\n    if (fgets(line, sizeof(line), stdin) == NULL) { printf(\"0\\n\"); return 0; }\n    for (p = line; *p != '\\0'; p++) if (*p >= 'A' && *p <= 'Z') count++;\n    printf(\"%d\\n\", count);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2079,
+  "topic": "指针",
+  "title": "指针实现字符串比较",
+  "difficulty": "困难",
+  "tags": [
+   "指针",
+   "字符指针"
+  ],
+  "description": [
+   "编写函数 int my_strcmp(const char *a, const char *b) 比较两个字符串，返回负值、0 或正值。读入两个不含空格的字符串，输出比较结果（-1、0、1）。"
+  ],
+  "input_description": "第一行一个字符串，第二行一个字符串。",
+  "output_description": "输出 -1、0 或 1。",
+  "constraints": [
+   "1 <= 长度 <= 200"
+  ],
+  "cases": [
+   {
+    "input": "abc abc\n",
+    "output": "0\n",
+    "is_sample": true
+   },
+   {
+    "input": "abc abd\n",
+    "output": "-1\n",
+    "is_sample": false
+   },
+   {
+    "input": "abd abc\n",
+    "output": "1\n",
+    "is_sample": false
+   },
+   {
+    "input": "a ab\n",
+    "output": "-1\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint my_strcmp(const char *a, const char *b) {\n    while (*a != '\\0' && *a == *b) { a++; b++; }\n    if (*a < *b) return -1;\n    if (*a > *b) return 1;\n    return 0;\n}\nint main(void) {\n    char a[205], b[205];\n    scanf(\"%204s\", a);\n    scanf(\"%204s\", b);\n    printf(\"%d\\n\", my_strcmp(a, b));\n    return 0;\n}\n"
+ },
+ {
+  "id": 2080,
+  "topic": "构造类型",
+  "title": "结构体存储学生信息",
+  "difficulty": "简单",
+  "tags": [
+   "构造类型",
+   "结构体"
+  ],
+  "description": [
+   "定义学生结构体（学号、姓名、成绩），读入一个学生的信息并按要求输出。"
+  ],
+  "input_description": "一行：学号（整数）、姓名（不含空格）、成绩（整数）。",
+  "output_description": "输出一行：学号 姓名 成绩。",
+  "constraints": [
+   "0 <= 学号 <= 99999",
+   "0 <= 成绩 <= 100"
+  ],
+  "cases": [
+   {
+    "input": "1 Tom 90\n",
+    "output": "1 Tom 90\n",
+    "is_sample": true
+   },
+   {
+    "input": "1002 小明 59\n",
+    "output": "1002 小明 59\n",
+    "is_sample": false
+   },
+   {
+    "input": "0 A 0\n",
+    "output": "0 A 0\n",
+    "is_sample": false
+   },
+   {
+    "input": "99999 Zzz 100\n",
+    "output": "99999 Zzz 100\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nstruct Student { int id; char name[32]; int score; };\nint main(void) {\n    struct Student s;\n    scanf(\"%d %31s %d\", &s.id, s.name, &s.score);\n    printf(\"%d %s %d\\n\", s.id, s.name, s.score);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2081,
+  "topic": "构造类型",
+  "title": "结构体数组求平均分",
+  "difficulty": "简单",
+  "tags": [
+   "构造类型",
+   "结构体数组"
+  ],
+  "description": [
+   "读入 n 个学生的成绩，输出平均分（保留两位小数）。"
+  ],
+  "input_description": "第一行正整数 n；之后 n 行，每行一个整数成绩。",
+  "output_description": "输出一个实数，表示平均分，保留两位小数。",
+  "constraints": [
+   "1 <= n <= 1000",
+   "0 <= 成绩 <= 100"
+  ],
+  "cases": [
+   {
+    "input": "3\n90\n80\n70\n",
+    "output": "80.00\n",
+    "is_sample": true
+   },
+   {
+    "input": "1\n59\n",
+    "output": "59.00\n",
+    "is_sample": false
+   },
+   {
+    "input": "4\n100\n100\n0\n0\n",
+    "output": "50.00\n",
+    "is_sample": false
+   },
+   {
+    "input": "2\n88\n93\n",
+    "output": "90.50\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nstruct Student { int score; };\nint main(void) {\n    int n, i;\n    struct Student a[1005];\n    long long sum = 0;\n    scanf(\"%d\", &n);\n    for (i = 0; i < n; i++) { scanf(\"%d\", &a[i].score); sum += a[i].score; }\n    printf(\"%.2f\\n\", (double) sum / n);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2082,
+  "topic": "构造类型",
+  "title": "找最高分学生",
+  "difficulty": "简单",
+  "tags": [
+   "构造类型",
+   "结构体数组"
+  ],
+  "description": [
+   "读入 n 个学生的姓名和成绩，输出成绩最高者的姓名（若并列取最先出现者）。"
+  ],
+  "input_description": "第一行正整数 n；之后 n 行，每行姓名（不含空格）和成绩。",
+  "output_description": "输出最高分学生姓名。",
+  "constraints": [
+   "1 <= n <= 1000",
+   "0 <= 成绩 <= 100"
+  ],
+  "cases": [
+   {
+    "input": "2\nTom 88\nAmy 95\n",
+    "output": "Amy\n",
+    "is_sample": true
+   },
+   {
+    "input": "3\nA 60\nB 60\nC 59\n",
+    "output": "A\n",
+    "is_sample": false
+   },
+   {
+    "input": "1\nSolo 100\n",
+    "output": "Solo\n",
+    "is_sample": false
+   },
+   {
+    "input": "2\nX 0\nY 0\n",
+    "output": "X\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nstruct Student { char name[32]; int score; };\nint main(void) {\n    int n, i, best = 0;\n    struct Student a[1005];\n    scanf(\"%d\", &n);\n    for (i = 0; i < n; i++) scanf(\"%31s %d\", a[i].name, &a[i].score);\n    for (i = 1; i < n; i++) if (a[i].score > a[best].score) best = i;\n    printf(\"%s\\n\", a[best].name);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2083,
+  "topic": "构造类型",
+  "title": "枚举表示星期",
+  "difficulty": "简单",
+  "tags": [
+   "构造类型",
+   "枚举"
+  ],
+  "description": [
+   "定义星期枚举，读入 1 到 7 的整数，输出对应的英文星期名（Monday 到 Sunday，首字母大写）。"
+  ],
+  "input_description": "一行一个整数 d。",
+  "output_description": "输出对应的英文星期名。",
+  "constraints": [
+   "1 <= d <= 7"
+  ],
+  "cases": [
+   {
+    "input": "1\n",
+    "output": "Monday\n",
+    "is_sample": true
+   },
+   {
+    "input": "7\n",
+    "output": "Sunday\n",
+    "is_sample": false
+   },
+   {
+    "input": "3\n",
+    "output": "Wednesday\n",
+    "is_sample": false
+   },
+   {
+    "input": "5\n",
+    "output": "Friday\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nenum Week { MON = 1, TUE, WED, THU, FRI, SAT, SUN };\nint main(void) {\n    int d;\n    const char *names[] = {\"\", \"Monday\", \"Tuesday\", \"Wednesday\", \"Thursday\", \"Friday\", \"Saturday\", \"Sunday\"};\n    scanf(\"%d\", &d);\n    if (d < MON || d > SUN) return 0;\n    printf(\"%s\\n\", names[d]);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2084,
+  "topic": "构造类型",
+  "title": "嵌套结构体日期",
+  "difficulty": "中等",
+  "tags": [
+   "构造类型",
+   "嵌套结构体"
+  ],
+  "description": [
+   "定义日期结构体（年、月、日）并读入一个日期，输出它在当年是第几天（不考虑非法日期）。"
+  ],
+  "input_description": "一行三个整数 y、m、d。",
+  "output_description": "输出一个整数，表示当年的第几天。",
+  "constraints": [
+   "1 <= y <= 9999",
+   "日期合法"
+  ],
+  "cases": [
+   {
+    "input": "2024 3 1\n",
+    "output": "61\n",
+    "is_sample": true
+   },
+   {
+    "input": "2023 12 31\n",
+    "output": "365\n",
+    "is_sample": false
+   },
+   {
+    "input": "2000 1 1\n",
+    "output": "1\n",
+    "is_sample": false
+   },
+   {
+    "input": "2024 2 29\n",
+    "output": "60\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nstruct Date { int year, month, day; };\nint main(void) {\n    struct Date dt;\n    int days[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};\n    int i, total = 0;\n    scanf(\"%d %d %d\", &dt.year, &dt.month, &dt.day);\n    if ((dt.year % 4 == 0 && dt.year % 100 != 0) || dt.year % 400 == 0) days[2] = 29;\n    for (i = 1; i < dt.month; i++) total += days[i];\n    total += dt.day;\n    printf(\"%d\\n\", total);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2085,
+  "topic": "构造类型",
+  "title": "结构体数组排序",
+  "difficulty": "中等",
+  "tags": [
+   "构造类型",
+   "结构体排序"
+  ],
+  "description": [
+   "读入 n 个学生的姓名和成绩，按成绩从高到低排序，成绩相同按输入顺序。输出姓名，每行一个。"
+  ],
+  "input_description": "第一行正整数 n；之后 n 行，每行姓名和成绩。",
+  "output_description": "按成绩降序输出 n 行姓名。",
+  "constraints": [
+   "1 <= n <= 1000",
+   "0 <= 成绩 <= 100"
+  ],
+  "cases": [
+   {
+    "input": "3\nTom 88\nAmy 95\nBob 88\n",
+    "output": "Amy\nTom\nBob\n",
+    "is_sample": true
+   },
+   {
+    "input": "2\nA 1\nB 2\n",
+    "output": "B\nA\n",
+    "is_sample": false
+   },
+   {
+    "input": "1\nSolo 50\n",
+    "output": "Solo\n",
+    "is_sample": false
+   },
+   {
+    "input": "4\nA 90\nB 90\nC 90\nD 89\n",
+    "output": "A\nB\nC\nD\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nstruct Student { char name[32]; int score; };\nint main(void) {\n    int n, i, j;\n    struct Student a[1005], t;\n    scanf(\"%d\", &n);\n    for (i = 0; i < n; i++) scanf(\"%31s %d\", a[i].name, &a[i].score);\n    for (i = 0; i < n - 1; i++)\n        for (j = 0; j < n - 1 - i; j++)\n            if (a[j].score < a[j + 1].score) { t = a[j]; a[j] = a[j + 1]; a[j + 1] = t; }\n    for (i = 0; i < n; i++) printf(\"%s\\n\", a[i].name);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2086,
+  "topic": "构造类型",
+  "title": "按班级统计人数",
+  "difficulty": "中等",
+  "tags": [
+   "构造类型",
+   "结构体数组"
+  ],
+  "description": [
+   "读入 n 个学生的班级编号，输出人数最多的班级编号（并列时输出编号较小的）。"
+  ],
+  "input_description": "第一行正整数 n；第二行 n 个整数，表示班级编号（1 到 10）。",
+  "output_description": "输出一个整数，表示人数最多的班级编号。",
+  "constraints": [
+   "1 <= n <= 1000",
+   "1 <= 班级编号 <= 10"
+  ],
+  "cases": [
+   {
+    "input": "5\n1 2 2 3 3\n",
+    "output": "2\n",
+    "is_sample": true
+   },
+   {
+    "input": "3\n1 1 1\n",
+    "output": "1\n",
+    "is_sample": false
+   },
+   {
+    "input": "4\n2 2 1 1\n",
+    "output": "1\n",
+    "is_sample": false
+   },
+   {
+    "input": "1\n10\n",
+    "output": "10\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nstruct ClassCount { int id; int count; };\nint main(void) {\n    int n, i, x, best = 1;\n    struct ClassCount c[11];\n    scanf(\"%d\", &n);\n    for (i = 1; i <= 10; i++) { c[i].id = i; c[i].count = 0; }\n    for (i = 0; i < n; i++) { scanf(\"%d\", &x); c[x].count++; }\n    for (i = 2; i <= 10; i++) if (c[i].count > c[best].count) best = i;\n    printf(\"%d\\n\", best);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2087,
+  "topic": "构造类型",
+  "title": "结构体指针修改数据",
+  "difficulty": "困难",
+  "tags": [
+   "构造类型",
+   "结构体指针"
+  ],
+  "description": [
+   "定义学生结构体，编写函数 void add_bonus(struct Student *s, int bonus) 给成绩加分（不超过 100）。读入学号、成绩和加分值，输出修改后的成绩。"
+  ],
+  "input_description": "一行三个整数：学号、成绩、加分值。",
+  "output_description": "输出一个整数，表示修改后的成绩。",
+  "constraints": [
+   "0 <= 成绩 <= 100",
+   "0 <= 加分 <= 100"
+  ],
+  "cases": [
+   {
+    "input": "1 80 15\n",
+    "output": "95\n",
+    "is_sample": true
+   },
+   {
+    "input": "2 95 10\n",
+    "output": "100\n",
+    "is_sample": false
+   },
+   {
+    "input": "3 100 5\n",
+    "output": "100\n",
+    "is_sample": false
+   },
+   {
+    "input": "4 0 100\n",
+    "output": "100\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nstruct Student { int id; int score; };\nvoid add_bonus(struct Student *s, int bonus) {\n    s->score += bonus;\n    if (s->score > 100) s->score = 100;\n}\nint main(void) {\n    struct Student s;\n    int bonus;\n    scanf(\"%d %d %d\", &s.id, &s.score, &bonus);\n    add_bonus(&s, bonus);\n    printf(\"%d\\n\", s.score);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2088,
+  "topic": "构造类型",
+  "title": "结构体实现复数运算",
+  "difficulty": "困难",
+  "tags": [
+   "构造类型",
+   "结构体"
+  ],
+  "description": [
+   "定义复数结构体（实部、虚部），读入两个整数复数，输出它们的和与积。输出格式为 a+bi，虚部为负时写成 a-bi。"
+  ],
+  "input_description": "一行四个整数：a b c d，表示两个复数 a+bi 与 c+di。",
+  "output_description": "输出两行：和、积，格式为 a+bi 或 a-bi。",
+  "constraints": [
+   "-100 <= 数值 <= 100"
+  ],
+  "cases": [
+   {
+    "input": "1 2 3 4\n",
+    "output": "4+6i\n-5+10i\n",
+    "is_sample": true
+   },
+   {
+    "input": "0 0 0 0\n",
+    "output": "0+0i\n0+0i\n",
+    "is_sample": false
+   },
+   {
+    "input": "-1 1 1 -1\n",
+    "output": "0+0i\n0+2i\n",
+    "is_sample": false
+   },
+   {
+    "input": "5 0 0 5\n",
+    "output": "5+5i\n0+25i\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nstruct Complex { int re, im; };\nstruct Complex add(struct Complex x, struct Complex y) {\n    struct Complex r = {x.re + y.re, x.im + y.im};\n    return r;\n}\nstruct Complex mul(struct Complex x, struct Complex y) {\n    struct Complex r = {x.re * y.re - x.im * y.im, x.re * y.im + x.im * y.re};\n    return r;\n}\nvoid print_complex(struct Complex c) {\n    if (c.im < 0) printf(\"%d-%di\\n\", c.re, -c.im);\n    else printf(\"%d+%di\\n\", c.re, c.im);\n}\nint main(void) {\n    struct Complex x, y;\n    scanf(\"%d %d %d %d\", &x.re, &x.im, &y.re, &y.im);\n    print_complex(add(x, y));\n    print_complex(mul(x, y));\n    return 0;\n}\n"
+ },
+ {
+  "id": 2089,
+  "topic": "构造类型",
+  "title": "成绩表按科目统计",
+  "difficulty": "困难",
+  "tags": [
+   "构造类型",
+   "结构体数组"
+  ],
+  "description": [
+   "读入 n 个学生的语文、数学成绩，输出两科各自的平均分（保留两位小数），以及总分最高学生的学号（并列取先出现者）。"
+  ],
+  "input_description": "第一行正整数 n；之后 n 行，每行学号、语文、数学。",
+  "output_description": "输出两行：语文平均分与数学平均分（保留两位小数），第三行为总分最高学生的学号。",
+  "constraints": [
+   "1 <= n <= 1000",
+   "0 <= 成绩 <= 100"
+  ],
+  "cases": [
+   {
+    "input": "2\n1 90 80\n2 80 90\n",
+    "output": "85.00\n85.00\n1\n",
+    "is_sample": true
+   },
+   {
+    "input": "1\n7 60 60\n",
+    "output": "60.00\n60.00\n7\n",
+    "is_sample": false
+   },
+   {
+    "input": "3\n1 100 0\n2 0 100\n3 50 50\n",
+    "output": "50.00\n50.00\n1\n",
+    "is_sample": false
+   },
+   {
+    "input": "2\n9 0 0\n8 100 100\n",
+    "output": "50.00\n50.00\n8\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nstruct Student { int id, chinese, math, total; };\nint main(void) {\n    int n, i, best = 0;\n    struct Student a[1005];\n    long long sc = 0, sm = 0;\n    scanf(\"%d\", &n);\n    for (i = 0; i < n; i++) {\n        scanf(\"%d %d %d\", &a[i].id, &a[i].chinese, &a[i].math);\n        a[i].total = a[i].chinese + a[i].math;\n        sc += a[i].chinese;\n        sm += a[i].math;\n    }\n    for (i = 1; i < n; i++) if (a[i].total > a[best].total) best = i;\n    printf(\"%.2f\\n\", (double) sc / n);\n    printf(\"%.2f\\n\", (double) sm / n);\n    printf(\"%d\\n\", a[best].id);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2090,
+  "topic": "文件与综合应用",
+  "title": "写入文件再读回",
+  "difficulty": "简单",
+  "tags": [
+   "文件",
+   "fopen"
+  ],
+  "description": [
+   "读入一个整数，把它的两倍写入文件 out.txt，再从文件读回并输出。"
+  ],
+  "input_description": "一行一个整数 n。",
+  "output_description": "输出一个整数，表示写入文件并读回的值。",
+  "constraints": [
+   "|n| <= 1000000"
+  ],
+  "cases": [
+   {
+    "input": "21\n",
+    "output": "42\n",
+    "is_sample": true
+   },
+   {
+    "input": "0\n",
+    "output": "0\n",
+    "is_sample": false
+   },
+   {
+    "input": "-5\n",
+    "output": "-10\n",
+    "is_sample": false
+   },
+   {
+    "input": "500\n",
+    "output": "1000\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int n, v;\n    FILE *fp;\n    scanf(\"%d\", &n);\n    fp = fopen(\"out.txt\", \"w\");\n    if (!fp) return 1;\n    fprintf(fp, \"%d\", n * 2);\n    fclose(fp);\n    fp = fopen(\"out.txt\", \"r\");\n    if (!fp) return 1;\n    fscanf(fp, \"%d\", &v);\n    fclose(fp);\n    printf(\"%d\\n\", v);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2091,
+  "topic": "文件与综合应用",
+  "title": "统计写入文件的字节数",
+  "difficulty": "简单",
+  "tags": [
+   "文件",
+   "文件大小"
+  ],
+  "description": [
+   "读入一个不含空格的字符串，写入文件 data.txt，输出写入的字符个数。"
+  ],
+  "input_description": "一行一个字符串。",
+  "output_description": "输出一个整数，表示字符个数。",
+  "constraints": [
+   "1 <= 长度 <= 500"
+  ],
+  "cases": [
+   {
+    "input": "hello\n",
+    "output": "5\n",
+    "is_sample": true
+   },
+   {
+    "input": "C\n",
+    "output": "1\n",
+    "is_sample": false
+   },
+   {
+    "input": "abcdefg\n",
+    "output": "7\n",
+    "is_sample": false
+   },
+   {
+    "input": "1234567890\n",
+    "output": "10\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    char s[505];\n    long size;\n    FILE *fp;\n    scanf(\"%504s\", s);\n    fp = fopen(\"data.txt\", \"w\");\n    if (!fp) return 1;\n    fputs(s, fp);\n    fclose(fp);\n    fp = fopen(\"data.txt\", \"rb\");\n    if (!fp) return 1;\n    fseek(fp, 0, SEEK_END);\n    size = ftell(fp);\n    fclose(fp);\n    printf(\"%ld\\n\", size);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2092,
+  "topic": "文件与综合应用",
+  "title": "统计文件行数",
+  "difficulty": "简单",
+  "tags": [
+   "文件",
+   "逐行读取"
+  ],
+  "description": [
+   "读入 n 行文本，写入文件 lines.txt，再逐行读回并输出行数。"
+  ],
+  "input_description": "第一行正整数 n；之后 n 行文本（不含空格）。",
+  "output_description": "输出一个整数，表示行数。",
+  "constraints": [
+   "1 <= n <= 100"
+  ],
+  "cases": [
+   {
+    "input": "3\na\nb\nc\n",
+    "output": "3\n",
+    "is_sample": true
+   },
+   {
+    "input": "1\nonly\n",
+    "output": "1\n",
+    "is_sample": false
+   },
+   {
+    "input": "2\nx\ny\n",
+    "output": "2\n",
+    "is_sample": false
+   },
+   {
+    "input": "5\nl1\nl2\nl3\nl4\nl5\n",
+    "output": "5\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int n, i, count = 0;\n    char buf[256];\n    FILE *fp;\n    scanf(\"%d\", &n);\n    fp = fopen(\"lines.txt\", \"w\");\n    if (!fp) return 1;\n    for (i = 0; i < n; i++) {\n        scanf(\"%255s\", buf);\n        fprintf(fp, \"%s\\n\", buf);\n    }\n    fclose(fp);\n    fp = fopen(\"lines.txt\", \"r\");\n    if (!fp) return 1;\n    while (fgets(buf, sizeof(buf), fp) != NULL) count++;\n    fclose(fp);\n    printf(\"%d\\n\", count);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2093,
+  "topic": "文件与综合应用",
+  "title": "追加写入两行",
+  "difficulty": "中等",
+  "tags": [
+   "文件",
+   "追加模式"
+  ],
+  "description": [
+   "读入两个不含空格的字符串，先写入第一个，再以追加方式写入第二个，最后读回整个文件并原样输出（每行一个）。"
+  ],
+  "input_description": "第一行一个字符串，第二行一个字符串。",
+  "output_description": "输出两行，先第一个字符串，后第二个字符串。",
+  "constraints": [
+   "1 <= 长度 <= 200"
+  ],
+  "cases": [
+   {
+    "input": "first\nsecond\n",
+    "output": "first\nsecond\n",
+    "is_sample": true
+   },
+   {
+    "input": "a\nb\n",
+    "output": "a\nb\n",
+    "is_sample": false
+   },
+   {
+    "input": "hello\nworld\n",
+    "output": "hello\nworld\n",
+    "is_sample": false
+   },
+   {
+    "input": "x\nx\n",
+    "output": "x\nx\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    char a[205], b[205], line[256];\n    FILE *fp;\n    scanf(\"%204s\", a);\n    scanf(\"%204s\", b);\n    fp = fopen(\"log.txt\", \"w\");\n    if (!fp) return 1;\n    fprintf(fp, \"%s\\n\", a);\n    fclose(fp);\n    fp = fopen(\"log.txt\", \"a\");\n    if (!fp) return 1;\n    fprintf(fp, \"%s\\n\", b);\n    fclose(fp);\n    fp = fopen(\"log.txt\", \"r\");\n    if (!fp) return 1;\n    while (fgets(line, sizeof(line), fp) != NULL) printf(\"%s\", line);\n    fclose(fp);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2094,
+  "topic": "文件与综合应用",
+  "title": "文件复制",
+  "difficulty": "中等",
+  "tags": [
+   "文件",
+   "缓冲区"
+  ],
+  "description": [
+   "读入一个不含空格的字符串，写入 src.txt，再复制到 dst.txt，输出复制后的内容长度。"
+  ],
+  "input_description": "一行一个字符串。",
+  "output_description": "输出一个整数，表示 dst.txt 的内容长度。",
+  "constraints": [
+   "1 <= 长度 <= 500"
+  ],
+  "cases": [
+   {
+    "input": "pointer\n",
+    "output": "7\n",
+    "is_sample": true
+   },
+   {
+    "input": "a\n",
+    "output": "1\n",
+    "is_sample": false
+   },
+   {
+    "input": "0123456789\n",
+    "output": "10\n",
+    "is_sample": false
+   },
+   {
+    "input": "transfer\n",
+    "output": "8\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    char s[505], buf[64];\n    long total = 0;\n    size_t got;\n    FILE *in, *out;\n    scanf(\"%504s\", s);\n    in = fopen(\"src.txt\", \"w\");\n    if (!in) return 1;\n    fputs(s, in);\n    fclose(in);\n    in = fopen(\"src.txt\", \"rb\");\n    out = fopen(\"dst.txt\", \"wb\");\n    if (!in || !out) return 1;\n    while ((got = fread(buf, 1, sizeof(buf), in)) > 0) { fwrite(buf, 1, got, out); total += (long) got; }\n    fclose(in);\n    fclose(out);\n    printf(\"%ld\\n\", total);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2095,
+  "topic": "文件与综合应用",
+  "title": "统计文件中的数字个数",
+  "difficulty": "中等",
+  "tags": [
+   "文件",
+   "fscanf"
+  ],
+  "description": [
+   "读入 n 个整数并写入 numbers.txt，再从文件中读回，统计其中正数的个数和总和。"
+  ],
+  "input_description": "第一行正整数 n；第二行 n 个整数。",
+  "output_description": "输出一行两个整数：正数个数、所有数之和。",
+  "constraints": [
+   "1 <= n <= 1000",
+   "|数值| <= 100000"
+  ],
+  "cases": [
+   {
+    "input": "5\n3 -2 0 7 -1\n",
+    "output": "2 7\n",
+    "is_sample": true
+   },
+   {
+    "input": "1\n5\n",
+    "output": "1 5\n",
+    "is_sample": false
+   },
+   {
+    "input": "3\n-1 -2 -3\n",
+    "output": "0 -6\n",
+    "is_sample": false
+   },
+   {
+    "input": "4\n1 2 3 4\n",
+    "output": "4 10\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int n, i, x;\n    long long sum = 0;\n    int positive = 0;\n    FILE *fp;\n    scanf(\"%d\", &n);\n    fp = fopen(\"numbers.txt\", \"w\");\n    if (!fp) return 1;\n    for (i = 0; i < n; i++) { scanf(\"%d\", &x); fprintf(fp, \"%d\\n\", x); }\n    fclose(fp);\n    fp = fopen(\"numbers.txt\", \"r\");\n    if (!fp) return 1;\n    while (fscanf(fp, \"%d\", &x) == 1) {\n        sum += x;\n        if (x > 0) positive++;\n    }\n    fclose(fp);\n    printf(\"%d %lld\\n\", positive, sum);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2096,
+  "topic": "文件与综合应用",
+  "title": "结构体数组写入文件",
+  "difficulty": "困难",
+  "tags": [
+   "文件",
+   "结构体"
+  ],
+  "description": [
+   "读入 n 个学生的学号和成绩，写入 scores.txt，再读回并输出总分最高的学号（并列取先出现者）。"
+  ],
+  "input_description": "第一行正整数 n；之后 n 行，每行学号和成绩。",
+  "output_description": "输出一个整数，表示总分最高的学号。",
+  "constraints": [
+   "1 <= n <= 1000",
+   "0 <= 成绩 <= 100"
+  ],
+  "cases": [
+   {
+    "input": "2\n1 90\n2 80\n",
+    "output": "1\n",
+    "is_sample": true
+   },
+   {
+    "input": "3\n5 60\n6 60\n7 59\n",
+    "output": "5\n",
+    "is_sample": false
+   },
+   {
+    "input": "1\n9 100\n",
+    "output": "9\n",
+    "is_sample": false
+   },
+   {
+    "input": "2\n3 0\n4 0\n",
+    "output": "3\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nstruct Student { int id, score; };\nint main(void) {\n    int n, i, best = 0;\n    struct Student a[1005], cur;\n    FILE *fp;\n    scanf(\"%d\", &n);\n    fp = fopen(\"scores.txt\", \"w\");\n    if (!fp) return 1;\n    for (i = 0; i < n; i++) {\n        scanf(\"%d %d\", &a[i].id, &a[i].score);\n        fprintf(fp, \"%d %d\\n\", a[i].id, a[i].score);\n    }\n    fclose(fp);\n    fp = fopen(\"scores.txt\", \"r\");\n    if (!fp) return 1;\n    i = 0;\n    while (fscanf(fp, \"%d %d\", &cur.id, &cur.score) == 2) {\n        if (i == 0 || cur.score > a[best].score) best = i;\n        a[i] = cur;\n        i++;\n    }\n    fclose(fp);\n    printf(\"%d\\n\", a[best].id);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2097,
+  "topic": "文件与综合应用",
+  "title": "读文件求最大值",
+  "difficulty": "困难",
+  "tags": [
+   "文件",
+   "数值统计"
+  ],
+  "description": [
+   "读入 n 个整数写入 values.txt，再从文件中读出并输出最大值。"
+  ],
+  "input_description": "第一行正整数 n；第二行 n 个整数。",
+  "output_description": "输出一个整数，表示最大值。",
+  "constraints": [
+   "1 <= n <= 1000",
+   "|数值| <= 1000000"
+  ],
+  "cases": [
+   {
+    "input": "5\n3 9 -2 7 1\n",
+    "output": "9\n",
+    "is_sample": true
+   },
+   {
+    "input": "1\n-4\n",
+    "output": "-4\n",
+    "is_sample": false
+   },
+   {
+    "input": "3\n-9 -2 -5\n",
+    "output": "-2\n",
+    "is_sample": false
+   },
+   {
+    "input": "4\n1000000 0 1 -1\n",
+    "output": "1000000\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int n, i, x, best;\n    FILE *fp;\n    scanf(\"%d\", &n);\n    fp = fopen(\"values.txt\", \"w\");\n    if (!fp) return 1;\n    for (i = 0; i < n; i++) { scanf(\"%d\", &x); fprintf(fp, \"%d\\n\", x); }\n    fclose(fp);\n    fp = fopen(\"values.txt\", \"r\");\n    if (!fp) return 1;\n    fscanf(fp, \"%d\", &best);\n    while (fscanf(fp, \"%d\", &x) == 1) if (x > best) best = x;\n    fclose(fp);\n    printf(\"%d\\n\", best);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2098,
+  "topic": "文件与综合应用",
+  "title": "简易日志追加",
+  "difficulty": "困难",
+  "tags": [
+   "文件",
+   "追加写入"
+  ],
+  "description": [
+   "读入 n 条日志（不含空格），逐条追加写入 app.log，最后输出日志条数和最后一条日志。"
+  ],
+  "input_description": "第一行正整数 n；之后 n 行，每行一个不带空格的字符串。",
+  "output_description": "输出一行：日志条数与最后一条日志，用空格分隔。",
+  "constraints": [
+   "1 <= n <= 100"
+  ],
+  "cases": [
+   {
+    "input": "2\nstart\nfinish\n",
+    "output": "2 finish\n",
+    "is_sample": true
+   },
+   {
+    "input": "1\nonly\n",
+    "output": "3 only\n",
+    "is_sample": false
+   },
+   {
+    "input": "3\na\nb\nc\n",
+    "output": "6 c\n",
+    "is_sample": false
+   },
+   {
+    "input": "2\nx1\nx2\n",
+    "output": "8 x2\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nint main(void) {\n    int n, i, count = 0;\n    char buf[256], last[256] = \"\";\n    FILE *fp;\n    scanf(\"%d\", &n);\n    for (i = 0; i < n; i++) {\n        scanf(\"%255s\", buf);\n        fp = fopen(\"app.log\", \"a\");\n        if (!fp) return 1;\n        fprintf(fp, \"%s\\n\", buf);\n        fclose(fp);\n    }\n    fp = fopen(\"app.log\", \"r\");\n    if (!fp) return 1;\n    while (fgets(buf, sizeof(buf), fp) != NULL) {\n        size_t len;\n        for (len = 0; buf[len] != '\\0'; len++) { }\n        while (len > 0 && (buf[len - 1] == '\\n' || buf[len - 1] == '\\r')) buf[--len] = '\\0';\n        for (len = 0; buf[len] != '\\0'; len++) last[len] = buf[len];\n        last[len] = '\\0';\n        count++;\n    }\n    fclose(fp);\n    printf(\"%d %s\\n\", count, last);\n    return 0;\n}\n"
+ },
+ {
+  "id": 2099,
+  "topic": "文件与综合应用",
+  "title": "成绩文件综合处理",
+  "difficulty": "困难",
+  "tags": [
+   "文件",
+   "综合应用"
+  ],
+  "description": [
+   "读入 n 个学生的学号和成绩，写入 grades.txt；再读回计算平均分（保留两位小数）和最高分学生的学号。"
+  ],
+  "input_description": "第一行正整数 n；之后 n 行，每行学号和成绩。",
+  "output_description": "输出两行：平均分（保留两位小数）、最高分学生学号（并列取先出现者）。",
+  "constraints": [
+   "1 <= n <= 1000",
+   "0 <= 成绩 <= 100"
+  ],
+  "cases": [
+   {
+    "input": "2\n1 90\n2 80\n",
+    "output": "85.00\n1\n",
+    "is_sample": true
+   },
+   {
+    "input": "1\n7 60\n",
+    "output": "60.00\n7\n",
+    "is_sample": false
+   },
+   {
+    "input": "3\n1 100\n2 0\n3 50\n",
+    "output": "50.00\n1\n",
+    "is_sample": false
+   },
+   {
+    "input": "2\n9 70\n8 70\n",
+    "output": "70.00\n9\n",
+    "is_sample": false
+   }
+  ],
+  "solution_c": "#include <stdio.h>\nstruct Student { int id, score; };\nint main(void) {\n    int n, i, count = 0, best_id = 0, best_score = -1;\n    long long sum = 0;\n    struct Student s;\n    FILE *fp;\n    scanf(\"%d\", &n);\n    fp = fopen(\"grades.txt\", \"w\");\n    if (!fp) return 1;\n    for (i = 0; i < n; i++) {\n        scanf(\"%d %d\", &s.id, &s.score);\n        fprintf(fp, \"%d %d\\n\", s.id, s.score);\n    }\n    fclose(fp);\n    fp = fopen(\"grades.txt\", \"r\");\n    if (!fp) return 1;\n    while (fscanf(fp, \"%d %d\", &s.id, &s.score) == 2) {\n        sum += s.score;\n        if (s.score > best_score) { best_score = s.score; best_id = s.id; }\n        count++;\n    }\n    fclose(fp);\n    printf(\"%.2f\\n\", (double) sum / count);\n    printf(\"%d\\n\", best_id);\n    return 0;\n}\n"
+ }
+]
