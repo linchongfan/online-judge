@@ -20,11 +20,38 @@ const filtersOpen = ref(false)
 const pageSize = 8
 const pageItems = ref<ProblemListItem[]>([])
 const allTags = ref<Tag[]>([])
+const tagsExpanded = ref(false)
 const stats = ref<UserStats | null>(null)
 const total = ref(0)
 const loading = ref(false)
 const error = ref('')
 let requestGeneration = 0
+
+const CORE_TAG_THRESHOLD = 5
+// 培养方案模块按学习顺序排在前面，其余知识点按覆盖题目数排序。
+const MODULE_TAG_ORDER = ['C语言入门', '数据与表达式', '输入与输出', '选择结构', '循环结构', '数组与字符串', '函数', '指针', '构造类型', '文件']
+const moduleTagIndex = new Map(MODULE_TAG_ORDER.map((name, index) => [name, index]))
+const sortedTags = computed(() => [...allTags.value].sort((a, b) => {
+  const aIndex = moduleTagIndex.get(a.name)
+  const bIndex = moduleTagIndex.get(b.name)
+  if (aIndex !== undefined || bIndex !== undefined) {
+    if (aIndex === undefined) return 1
+    if (bIndex === undefined) return -1
+    return aIndex - bIndex
+  }
+  return b.problemCount - a.problemCount
+}))
+const coreTags = computed(() => {
+  const core = sortedTags.value.filter(item => item.problemCount >= CORE_TAG_THRESHOLD)
+  return core.length ? core : sortedTags.value.slice(0, 12)
+})
+const hiddenTagCount = computed(() => Math.max(0, sortedTags.value.length - coreTags.value.length))
+const visibleTags = computed(() => {
+  if (tagsExpanded.value) return sortedTags.value
+  if (!tag.value || coreTags.value.some(item => item.name === tag.value)) return coreTags.value
+  const selected = sortedTags.value.find(item => item.name === tag.value)
+  return selected ? [...coreTags.value, selected] : coreTags.value
+})
 
 const hasFilters = computed(() => Boolean(keyword.value || difficulty.value || tag.value || progress.value))
 const totalProblems = computed(() => stats.value?.difficultyProgress.reduce((sum, item) => sum + item.total, 0) ?? 0)
@@ -143,7 +170,11 @@ onMounted(() => {
 
         <section class="rail-section tag-section">
           <div class="rail-heading"><h2>知识点</h2><span>{{ tag ? '已选 1 项' : '可单选' }}</span></div>
-          <div class="tag-list"><button v-for="item in allTags" :key="item.id" :class="{ active: tag === item.name }" @click="selectTag(item.name)">{{ item.name }}<el-icon v-if="tag === item.name"><Check /></el-icon></button></div>
+          <div class="tag-list"><button v-for="item in visibleTags" :key="item.id" :class="{ active: tag === item.name }" @click="selectTag(item.name)">{{ item.name }}<el-icon v-if="tag === item.name"><Check /></el-icon></button></div>
+          <button v-if="hiddenTagCount" class="tag-toggle" @click="tagsExpanded = !tagsExpanded">
+            {{ tagsExpanded ? '收起' : `展开全部 ${allTags.length} 个` }}
+            <el-icon><ArrowUp v-if="tagsExpanded" /><ArrowDown v-else /></el-icon>
+          </button>
         </section>
         <button class="clear-filters" :disabled="!hasFilters" @click="resetFilters"><el-icon><RefreshLeft /></el-icon>清空筛选条件</button>
       </aside>
@@ -225,6 +256,8 @@ onMounted(() => {
 .tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 .tag-list button { display: flex; align-items: center; gap: 3px; border: 1px solid #e4ebf3; border-radius: 5px; background: #fff; color: var(--text-secondary); padding: 5px 7px; font-size: 10px; cursor: pointer; }
 .tag-list button:hover, .tag-list button.active { color: var(--primary); border-color: #a9c5f2; background: var(--primary-soft); }
+.tag-toggle { display: inline-flex; align-items: center; gap: 3px; margin-top: 10px; border: 0; background: transparent; color: var(--primary); padding: 2px 0; font-size: 10px; cursor: pointer; }
+.tag-toggle:hover { text-decoration: underline; }
 .clear-filters { width: calc(100% - 32px); margin: 13px 16px; display: flex; align-items: center; justify-content: center; gap: 5px; border: 0; background: transparent; color: var(--primary); padding: 6px; font-size: 10px; cursor: pointer; }
 .clear-filters:disabled { color: #b2bdca; cursor: default; }
 .library-main { min-width: 0; }
