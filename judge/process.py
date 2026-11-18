@@ -14,6 +14,7 @@ from typing import BinaryIO, cast
 from .sandbox import (
     LocalSubprocessBackend,
     SandboxBackend,
+    SandboxExecutionInfo,
     SandboxPolicy,
     SandboxTerminationReason,
 )
@@ -94,6 +95,9 @@ class ProcessRunner:
             stdin_file.write(stdin_data)
             stdin_file.seek(0)
             process: subprocess.Popen[bytes] | None = None
+            # Authoritative backend accounting, collected BEFORE cleanup
+            # releases backend state (meta files, proxy threads, box records).
+            info: SandboxExecutionInfo | None = None
             started = time.monotonic()
             timed_out = False
             output_exceeded = False
@@ -116,6 +120,7 @@ class ProcessRunner:
                 except Exception as exc:
                     raise ProcessStartError(f"Unable to start process with {type(exc).__name__}: {exc}") from exc
 
+                output_stop = backend.output_stop_event(process)
                 while process.poll() is None:
                     elapsed_ms = (time.monotonic() - started) * 1_000
                     if elapsed_ms >= limits.wall_timeout_ms:
@@ -125,6 +130,10 @@ class ProcessRunner:
                         self._combined_output_size(cast(BinaryIO, stdout_file), cast(BinaryIO, stderr_file))
                         > limits.output_limit_bytes
                     ):
+                        output_exceeded = True
+                        break
+                    if output_stop is not None and output_stop.is_set():
+                        # A supervising backend's hard output cap tripped.
                         output_exceeded = True
                         break
                     memory_kb = backend.memory_usage_kb(process)
@@ -164,6 +173,21 @@ class ProcessRunner:
                     peak_memory_kb = max(peak_memory_kb or 0, final_memory_kb)
                     if limits.memory_limit_kb is not None and final_memory_kb > limits.memory_limit_kb:
                         memory_exceeded = True
+
+                # Collect authoritative accounting while backend state (meta
+                # files, sandbox box records) still exists; cleanup() below
+                # deletes it. Never call execution_info after cleanup. This
+                # also drains supervising output proxies into our streams.
+                info = backend.execution_info(process)
+
+                # Final output cap check: supervising proxies may only finish
+                # draining (and tripping their hard cap) while the backend
+                # collects execution info above, so re-check AFTER that call.
+                if (
+                    self._combined_output_size(cast(BinaryIO, stdout_file), cast(BinaryIO, stderr_file))
+                    > limits.output_limit_bytes
+                ):
+                    output_exceeded = True
             finally:
                 if process is not None:
                     if process.poll() is None:
@@ -175,10 +199,16 @@ class ProcessRunner:
                             process.wait()
                     backend.cleanup(process)
 
+            info = info or SandboxExecutionInfo()
             runtime_ms = max(0, round((time.monotonic() - started) * 1_000))
-            info = backend.execution_info(process)
             if info.infrastructure_error and not infrastructure_error:
                 infrastructure_error = info.infrastructure_error
+            # A supervising backend (e.g. isolate) reports the *program's* exit
+            # status from its meta file, which is authoritative over the
+            # supervisor process exit code.
+            exit_code = process.returncode if process is not None else None
+            if info.exit_code is not None:
+                exit_code = info.exit_code
             if info.peak_memory_kb is not None:
                 peak_memory_kb = max(peak_memory_kb or 0, info.peak_memory_kb)
                 if limits.memory_limit_kb is not None and info.peak_memory_kb > limits.memory_limit_kb:
@@ -197,7 +227,7 @@ class ProcessRunner:
             stdout = self._read_bounded(cast(BinaryIO, stdout_file), limits.output_limit_bytes)
             stderr = self._read_bounded(cast(BinaryIO, stderr_file), limits.output_limit_bytes)
             return ProcessResult(
-                exit_code=process.returncode if process is not None else None,
+                exit_code=exit_code,
                 runtime_ms=runtime_ms,
                 memory_kb=peak_memory_kb,
                 stdout=stdout,

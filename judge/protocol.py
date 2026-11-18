@@ -48,6 +48,11 @@ class JudgeRequest:
     compile_time_limit_ms: int = 10_000
     output_limit_bytes: int = 1_048_576
     compile_output_limit_bytes: int = 65_536
+    # True only for an interactive sample run. Security boundary: official
+    # submissions (is_sample_run=False) never return the user program's
+    # runtime stderr, even for cases flagged is_sample, because hidden and
+    # sample cases are executed together and stderr can echo hidden input.
+    is_sample_run: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "cases", tuple(self.cases))

@@ -6,17 +6,20 @@ if [[ ${EUID} -ne 0 ]]; then
     exit 1
 fi
 if [[ $# -ne 1 ]]; then
-    echo "Usage: $0 <public-domain-or-ip>" >&2
+    echo "Usage: $0 <public-domain>" >&2
     exit 1
 fi
 
 DOMAIN=$1
-# Pure-IP deployments cannot obtain a trusted Let's Encrypt certificate; they
-# run plain HTTP on port 80 with Secure cookies disabled.
-IS_IP=0
+# Production requires HTTPS: the app refuses to start with Secure cookies
+# disabled, and plain-HTTP deployments cannot protect refresh sessions.
+# Point this at a domain with valid TLS instead of a bare IP address.
 if [[ $DOMAIN =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    IS_IP=1
+    echo "Refusing to configure a production deployment for bare IP address '$DOMAIN'." >&2
+    echo "Use a domain name with HTTPS (the app requires REFRESH_COOKIE_SECURE=true in production)." >&2
+    exit 1
 fi
+IS_IP=0
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 CONFIG_DIR=/etc/xinbaoyan
 APP_ENV="$CONFIG_DIR/app.env"
@@ -34,7 +37,7 @@ fi
 getent group xinbaoyan >/dev/null || { echo "Missing xinbaoyan group; run bootstrap.sh first." >&2; exit 1; }
 install -d -m 750 -o root -g xinbaoyan "$CONFIG_DIR"
 
-DOMAIN="$DOMAIN" IS_IP="$IS_IP" SCRIPT_DIR="$SCRIPT_DIR" CONFIG_DIR="$CONFIG_DIR" python3 - <<'PY'
+DOMAIN="$DOMAIN" SCRIPT_DIR="$SCRIPT_DIR" CONFIG_DIR="$CONFIG_DIR" python3 - <<'PY'
 import os
 import secrets
 import shutil
@@ -43,7 +46,6 @@ from pathlib import Path
 source = Path(os.environ["SCRIPT_DIR"])
 target = Path(os.environ["CONFIG_DIR"])
 domain = os.environ["DOMAIN"]
-is_ip = os.environ["IS_IP"] == "1"
 values = {
     "CHANGE_ME_SECRET": secrets.token_hex(32),
     "CHANGE_ME_JUDGE_SECRET": secrets.token_hex(32),
@@ -55,9 +57,6 @@ values = {
 app_content = (source / "app.env.example").read_text(encoding="utf-8")
 for marker in sorted(values, key=len, reverse=True):
     app_content = app_content.replace(marker, values[marker])
-if is_ip:
-    app_content = app_content.replace("REFRESH_COOKIE_SECURE=true", "REFRESH_COOKIE_SECURE=false")
-    app_content = app_content.replace("CORS_ORIGINS=https://", "CORS_ORIGINS=http://")
 infra_content = (source / "infra.env.example").read_text(encoding="utf-8")
 for marker in sorted(values, key=len, reverse=True):
     infra_content = infra_content.replace(marker, values[marker])

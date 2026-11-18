@@ -6,20 +6,22 @@ if [[ ${EUID} -ne 0 ]]; then
     exit 1
 fi
 if [[ $# -lt 1 || $# -gt 2 ]]; then
-    echo "Usage: $0 <public-domain-or-ip> [http-port]" >&2
+    echo "Usage: $0 <public-domain> [http-port]" >&2
     exit 1
 fi
 : "${LETSENCRYPT_EMAIL:=unused@example.com}"
 
 DOMAIN=$1
+if [[ $DOMAIN =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "Refusing to bootstrap a production deployment for bare IP address '$DOMAIN'." >&2
+    echo "The app requires REFRESH_COOKIE_SECURE=true in production, which needs HTTPS." >&2
+    echo "Use a domain name (Let's Encrypt will be provisioned automatically)." >&2
+    exit 1
+fi
 HTTP_PORT=${2:-80}
 if [[ ! $HTTP_PORT =~ ^[0-9]+$ ]] || [[ $HTTP_PORT -lt 1 || $HTTP_PORT -gt 65535 ]]; then
     echo "HTTP port must be a number between 1 and 65535, got: $HTTP_PORT" >&2
     exit 1
-fi
-IS_IP=0
-if [[ $DOMAIN =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    IS_IP=1
 fi
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 BASE_DIR=/opt/xinbaoyan
@@ -93,37 +95,27 @@ done
 install -d -m 755 -o root -g root /etc/letsencrypt/renewal-hooks/deploy /var/www/certbot
 install -m 700 -o root -g root "$SCRIPT_DIR/renewal-hook.sh" /etc/letsencrypt/renewal-hooks/deploy/xinbaoyan-nginx.sh
 
-if [[ $IS_IP == 1 ]]; then
-    # No trusted certificate authority issues certificates for bare IPs; run
-    # plain HTTP on the requested port and skip certbot entirely.
-    echo "IP-only deployment detected: skipping Let's Encrypt, using plain HTTP on port $HTTP_PORT."
-    sed -e "s/__DOMAIN__/$DOMAIN/g" -e "s/__HTTP_PORT__/$HTTP_PORT/g" "$SCRIPT_DIR/nginx-ip.conf" > /etc/nginx/sites-available/xinbaoyan.conf
-    rm -f /etc/nginx/sites-enabled/xinbaoyan-acme.conf
-else
-    if [[ ! -s /etc/letsencrypt/live/$DOMAIN/fullchain.pem ]]; then
-        sed "s/__DOMAIN__/$DOMAIN/g" "$SCRIPT_DIR/nginx-acme.conf" > /etc/nginx/sites-available/xinbaoyan-acme.conf
-        ln -sfn /etc/nginx/sites-available/xinbaoyan-acme.conf /etc/nginx/sites-enabled/xinbaoyan-acme.conf
-        nginx -t
-        systemctl enable --now nginx
-        systemctl restart nginx
-        certbot certonly --webroot --webroot-path /var/www/certbot \
-            --domain "$DOMAIN" --email "$LETSENCRYPT_EMAIL" \
-            --agree-tos --non-interactive --keep-until-expiring
-        unlink /etc/nginx/sites-enabled/xinbaoyan-acme.conf
-    fi
-    if [[ $HTTP_PORT != 80 ]]; then
-        echo "Custom HTTP port $HTTP_PORT requested with a domain; HTTPS will still use 443, plain HTTP listens on $HTTP_PORT."
-    fi
-    sed -e "s/__DOMAIN__/$DOMAIN/g" -e "s/__HTTP_PORT__/$HTTP_PORT/g" "$SCRIPT_DIR/nginx.conf" > /etc/nginx/sites-available/xinbaoyan.conf
+if [[ ! -s /etc/letsencrypt/live/$DOMAIN/fullchain.pem ]]; then
+    sed "s/__DOMAIN__/$DOMAIN/g" "$SCRIPT_DIR/nginx-acme.conf" > /etc/nginx/sites-available/xinbaoyan-acme.conf
+    ln -sfn /etc/nginx/sites-available/xinbaoyan-acme.conf /etc/nginx/sites-enabled/xinbaoyan-acme.conf
+    nginx -t
+    systemctl enable --now nginx
+    systemctl restart nginx
+    certbot certonly --webroot --webroot-path /var/www/certbot \
+        --domain "$DOMAIN" --email "$LETSENCRYPT_EMAIL" \
+        --agree-tos --non-interactive --keep-until-expiring
+    unlink /etc/nginx/sites-enabled/xinbaoyan-acme.conf
 fi
+if [[ $HTTP_PORT != 80 ]]; then
+    echo "Custom HTTP port $HTTP_PORT requested with a domain; HTTPS will still use 443, plain HTTP listens on $HTTP_PORT."
+fi
+sed -e "s/__DOMAIN__/$DOMAIN/g" -e "s/__HTTP_PORT__/$HTTP_PORT/g" "$SCRIPT_DIR/nginx.conf" > /etc/nginx/sites-available/xinbaoyan.conf
 ln -sfn /etc/nginx/sites-available/xinbaoyan.conf /etc/nginx/sites-enabled/xinbaoyan.conf
 nginx -t
 systemctl enable --now nginx
 systemctl restart nginx
 systemctl daemon-reload
-if [[ $IS_IP == 0 ]]; then
-    systemctl enable --now certbot.timer
-fi
+systemctl enable --now certbot.timer
 
 cat <<EOF
 Bootstrap complete.

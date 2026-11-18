@@ -20,6 +20,7 @@ import pytest
 
 from judge.config import JudgeConfig
 from judge.protocol import JudgeRequest, JudgeStatus, TestCase
+from judge.sandbox import SandboxMode
 from judge.worker import JudgeWorker
 
 pytestmark = [
@@ -33,9 +34,18 @@ pytestmark = [
 def worker(tmp_path: Path) -> JudgeWorker:
     work_root = tmp_path / "judge-work"
     work_root.mkdir(parents=True, exist_ok=True)
-    config = JudgeConfig.from_env({"JUDGE_WORK_ROOT": str(work_root)})
-    assert config.sandbox_backend is not None
-    return JudgeWorker(config, sandbox_backend=config.sandbox_backend)
+    # Inherit the ambient judge environment (JUDGE_ENV, JUDGE_SANDBOX_BACKEND,
+    # toolchain paths, isolate locations) and only pin the scratch directory.
+    # The assertions below guarantee this suite really exercises the
+    # production isolate backend rather than silently degrading to the local
+    # development backend.
+    config = JudgeConfig.from_env({**os.environ, "JUDGE_WORK_ROOT": str(work_root)})
+    assert config.sandbox.mode is SandboxMode.PRODUCTION, "JUDGE_VM tests require JUDGE_ENV=production"
+    backend = config.sandbox_backend
+    assert backend is not None and type(backend).__name__ == "LinuxIsolateBackend", (
+        "JUDGE_VM tests require JUDGE_SANDBOX_BACKEND=isolate"
+    )
+    return JudgeWorker(config, sandbox_backend=backend)
 
 
 def _request(source: str, *, time_limit_ms: int = 2000, memory_limit_kb: int = 262144) -> JudgeRequest:
@@ -46,6 +56,7 @@ def _request(source: str, *, time_limit_ms: int = 2000, memory_limit_kb: int = 2
         cases=(TestCase("1", "hello", "hello", is_sample=True),),
         time_limit_ms=time_limit_ms,
         memory_limit_kb=memory_limit_kb,
+        is_sample_run=True,
     )
 
 
@@ -123,7 +134,41 @@ def test_multi_case_program_runs_each_case_in_fresh_sandbox(worker: JudgeWorker)
             TestCase("2", "world", "WORLD", is_sample=True),
         ),
         time_limit_ms=2000,
+        is_sample_run=True,
     )
     result = worker.judge(request)
     assert result.status is JudgeStatus.AC
     assert [case.status for case in result.case_results] == [JudgeStatus.AC, JudgeStatus.AC]
+
+
+def test_official_submission_cannot_smuggle_hidden_input_via_sample_stderr(worker: JudgeWorker) -> None:
+    # Adversarial: pass the hidden case, stash its stdin via the temp dir, then
+    # in the public sample case read the stash and echo it to stderr. Even if
+    # the stash survived (it must not), an official submission never returns
+    # user-program runtime stderr — the hidden input must not reach the API.
+    exploit = (
+        "import os, sys\n"
+        "from pathlib import Path\n"
+        "data = sys.stdin.read()\n"
+        "stash = Path(os.environ['TMP']) / 'stash'\n"
+        "if stash.exists():\n"
+        "    sys.stderr.write(stash.read_text())\n"
+        "    sys.exit(3)\n"
+        "stash.write_text(data)\n"
+        "sys.stdout.write(data)\n"
+    )
+    request = JudgeRequest(
+        request_id=f"vm-leak-{time.monotonic_ns()}",
+        language="python",
+        source_code=exploit,
+        cases=(
+            TestCase("1", "hidden-input-secret", "hidden-input-secret", is_sample=False),
+            TestCase("2", "hello", "hello", is_sample=True),
+        ),
+        time_limit_ms=2000,
+        # Official submission: runtime stderr must never be returned.
+        is_sample_run=False,
+    )
+    result = worker.judge(request)
+    assert result.status is JudgeStatus.AC
+    assert "hidden-input-secret" not in repr(result.to_dict())

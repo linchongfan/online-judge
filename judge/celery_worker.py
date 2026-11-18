@@ -115,6 +115,7 @@ def _execute(payload: dict[str, Any]) -> None:
         ),
         time_limit_ms=payload["time_limit_ms"],
         memory_limit_kb=payload["memory_limit_kb"],
+        is_sample_run=bool(payload.get("is_sample_run", False)),
     )
     from judge.config import JudgeConfig
 

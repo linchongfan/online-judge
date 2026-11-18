@@ -187,14 +187,21 @@ docker compose --profile judge up -d --force-recreate judge-worker
 
 `deploy/linux/` 与 `deploy/judge-linux/` 保留了 systemd + 宿主机 Nginx 的替代方案（Ubuntu 22.04/24.04，22.04 会自动添加 deadsnakes PPA 安装 Python 3.12），适用于需要自动申请 HTTPS 证书或不想引入容器编排的环境，详见 **[Linux 单机自动化部署方案](deploy/LINUX_AUTOMATED_DEPLOYMENT.md)**。
 
-首次部署完成后会自动创建两个初始账号（幂等，重复部署跳过）：
+首次部署**不会自动创建任何账号**。部署完成后用交互式脚本创建第一个管理员：
 
-| 角色 | 账号 | 密码 |
-| --- | --- | --- |
-| 管理员 | `admin@123321` | `admin@123321` |
-| 测试用户 | `test@123456` | `test@123456` |
+```bash
+.venv/bin/python scripts/create_admin.py <用户名> <邮箱>
+```
 
-首次登录后请立即在个人中心修改密码。禁用自动创建：systemd 方案用 `CREATE_DEFAULT_USERS=0`，容器方案跳过 `migrate` 服务中的建号步骤即可。`local` 沙箱后端不得用于真实用户代码。
+也可以显式启用自动建号（不推荐，凭据必须全部通过环境变量提供，脚本内无任何内置默认密码）：
+
+```bash
+sudo CREATE_DEFAULT_USERS=1 \
+  DEFAULT_ADMIN_USERNAME=... DEFAULT_ADMIN_PASSWORD=... DEFAULT_ADMIN_EMAIL=... \
+  bash deploy/linux/deploy.sh
+```
+
+测试用户仅在内网/演示环境显式设置 `CREATE_DEFAULT_TEST_USER=1` 及 `DEFAULT_TEST_*` 凭据时才创建。生产环境要求 HTTPS：`bootstrap.sh`/`configure.sh` 拒绝裸 IP 地址，应用在生产模式下强制 `REFRESH_COOKIE_SECURE=true`。已按旧文档部署的实例请立即删除或轮换 `admin@123321` / `test@123456` 默认账号并撤销其有效会话。`local` 沙箱后端不得用于真实用户代码。
 
 ## C 语言培养方案题库
 

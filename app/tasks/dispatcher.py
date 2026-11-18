@@ -43,6 +43,9 @@ def _build_payload(db: Session, task: JudgeTask) -> dict:
         "cases": serialized_cases,
         "time_limit_ms": submission.problem.time_limit_ms,
         "memory_limit_kb": submission.problem.memory_limit_mb * 1024,
+        # Security boundary for runtime diagnostics: the worker only returns
+        # sanitized user-program stderr for interactive sample runs.
+        "is_sample_run": bool(submission.is_sample_run),
     }
 
 

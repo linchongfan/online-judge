@@ -272,47 +272,68 @@ def test_production_rejects_default_local_backend(tmp_path: Path) -> None:
     assert "hard_memory_limit" in message
 
 
-def test_production_windows_backend_without_firewall_is_refused(tmp_path: Path) -> None:
-    config = JudgeConfig.from_env(
-        {"JUDGE_ENV": "production", SANDBOX_BACKEND_ENV: "windows", "JUDGE_WORK_ROOT": str(tmp_path)}
-    )
-    backend = config.sandbox_backend
-    assert isinstance(backend, WindowsSandboxBackend)
-    with pytest.raises(SandboxConfigurationError) as error:
-        SandboxPolicy.production().ensure_execution_allowed(backend)
-    assert "network_disabled" in str(error.value)
-    assert "host firewall" in str(error.value)
+def test_production_windows_backend_is_refused_before_capability_checks(tmp_path: Path) -> None:
+    # Fail closed at configuration time: the Windows backend does not enforce a
+    # verified filesystem/network boundary, so production must refuse it even
+    # without a firewall claim — capability checks are never reached.
+    with pytest.raises(ToolchainConfigurationError, match="not approved for production"):
+        JudgeConfig.from_env(
+            {"JUDGE_ENV": "production", SANDBOX_BACKEND_ENV: "windows", "JUDGE_WORK_ROOT": str(tmp_path)}
+        )
 
 
-def test_windows_backend_can_supply_network_configuration_hint(tmp_path: Path) -> None:
-    config = JudgeConfig.from_env(
-        {"JUDGE_ENV": "production", SANDBOX_BACKEND_ENV: "windows", "JUDGE_WORK_ROOT": str(tmp_path)}
-    )
-    backend = config.sandbox_backend
-    assert isinstance(backend, WindowsSandboxBackend)
-    policy = SandboxPolicy.production(
-        network_source="host firewall (JUDGE_FIREWALL_ACTIVE)",
-        network_hint=WINDOWS_FIREWALL_HINT,
-    )
-    with pytest.raises(SandboxConfigurationError) as error:
-        policy.ensure_execution_allowed(backend)
-    assert "JUDGE_FIREWALL_ACTIVE" in str(error.value)
-    assert "setup_judge_firewall.ps1" in str(error.value)
-
-
-def test_production_windows_backend_with_firewall_is_allowed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_windows_backend_in_production_is_refused_even_with_firewall_env(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # An environment variable must not be able to re-enable an unverified
+    # backend for production.
     monkeypatch.setenv("JUDGE_FIREWALL_ACTIVE", "1")
-    config = JudgeConfig.from_env(
-        {"JUDGE_ENV": "production", SANDBOX_BACKEND_ENV: "windows", "JUDGE_WORK_ROOT": str(tmp_path)}
-    )
-    backend = config.sandbox_backend
-    assert isinstance(backend, WindowsSandboxBackend)
-    assert backend.firewall_configured() is True
+    with pytest.raises(ToolchainConfigurationError, match="not approved for production"):
+        JudgeConfig.from_env(
+            {"JUDGE_ENV": "production", SANDBOX_BACKEND_ENV: "windows", "JUDGE_WORK_ROOT": str(tmp_path)}
+        )
+
+
+def test_policy_network_hint_is_reported_for_verified_firewall_backends() -> None:
+    # Policy-level behaviour for a backend that positively verifies its host
+    # firewall: the missing network_disabled capability is waived and the
+    # configured hint is surfaced. Uses a stub, not the unapproved Windows
+    # backend, whose production use is refused outright (see above).
+    class FirewallVerifiedBackend:
+        capabilities = IsolationCapabilities(
+            process_group_termination=True,
+            hard_wall_time_limit=True,
+            hard_output_limit=True,
+            hard_memory_limit=True,
+            filesystem_isolation=True,
+            low_privilege=True,
+        )
+
+        def firewall_configured(self) -> bool:
+            return True
+
     policy = SandboxPolicy.production(
         network_source="host firewall (JUDGE_FIREWALL_ACTIVE)",
         network_hint=WINDOWS_FIREWALL_HINT,
     )
-    policy.ensure_execution_allowed(backend)  # Must not raise.
+    policy.ensure_execution_allowed(FirewallVerifiedBackend())  # Must not raise.
+
+    class NoNetworkBackend:
+        capabilities = IsolationCapabilities(
+            process_group_termination=True,
+            hard_wall_time_limit=True,
+            hard_output_limit=True,
+            hard_memory_limit=True,
+            filesystem_isolation=True,
+            low_privilege=True,
+        )
+
+    with pytest.raises(SandboxConfigurationError) as error:
+        policy.ensure_execution_allowed(NoNetworkBackend())
+    message = str(error.value)
+    assert "network_disabled" in message
+    assert "JUDGE_FIREWALL_ACTIVE" in message
+    assert "setup_judge_firewall.ps1" in message
 
 
 def test_unknown_sandbox_backend_name_is_rejected(tmp_path: Path) -> None:

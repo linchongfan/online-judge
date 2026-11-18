@@ -102,6 +102,20 @@ def test_policy_defaults_closed_and_production_requires_real_capabilities() -> N
     assert "low_privilege" in message
 
 
+def test_windows_backend_is_refused_in_production_mode() -> None:
+    # The Windows backend lacks a verified filesystem/network boundary; it must
+    # fail closed before any capability claims are trusted. This check happens
+    # before the backend class is even imported, so it runs on every platform.
+    with pytest.raises(ToolchainConfigurationError, match="not approved for production"):
+        JudgeConfig.from_env(
+            {
+                "JUDGE_ENV": "production",
+                "JUDGE_SANDBOX_BACKEND": "windows",
+                "JUDGE_WORK_ROOT": r"C:\judge-work" if os.name == "nt" else "/tmp/judge-work",
+            }
+        )
+
+
 def test_environment_policy_and_clean_environment_do_not_inherit_secrets(tmp_path: Path) -> None:
     config = JudgeConfig.from_env(
         {
