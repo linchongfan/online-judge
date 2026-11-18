@@ -557,6 +557,15 @@ class LinuxIsolateBackend(SandboxBackend):
         process_limit, disk_blocks, disk_inodes, memory_limit_kb = self._limits(argv, effective_limits)
         command = self._sandbox_argv(argv, work_dir)
         box_id = self._allocate_box_id()
+        try:
+            # tempfile creates task directories as 0700. The per-box UID must
+            # own this one directory to traverse it and create stdout/stderr;
+            # no parent or sibling task directory becomes accessible.
+            os.chown(work_dir, self._first_uid + box_id, self._first_gid + box_id)  # type: ignore[attr-defined]
+        except PermissionError as exc:
+            raise SandboxConfigurationError(
+                "Linux judge worker needs permission to chown the per-spawn task directory to the isolate box UID"
+            ) from exc
         self._init_box(box_id, disk_blocks, disk_inodes)
         state = _SpawnState(
             box_id=box_id,

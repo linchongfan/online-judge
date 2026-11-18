@@ -174,6 +174,11 @@ def test_spawn_uses_isolate_with_expected_limits(
     monkeypatch.setattr("judge.linux_isolate.subprocess.run", fake_run)
     monkeypatch.setattr("judge.linux_isolate.subprocess.Popen", fake_popen)
     monkeypatch.setattr(backend, "_allocate_box_id", lambda: 7)
+    chown_calls: list[tuple[str, int, int]] = []
+    monkeypatch.setattr(
+        "judge.linux_isolate.os.chown",
+        lambda path, uid, gid: chown_calls.append((str(path), uid, gid)),
+    )
 
     work_dir = tmp_path / "task"
     work_dir.mkdir()
@@ -191,6 +196,7 @@ def test_spawn_uses_isolate_with_expected_limits(
     )
 
     assert process.pid == 9000
+    assert chown_calls == [(str(work_dir), 60007, 60007)]
     init_call = calls[0]
     run_call = calls[1]
     assert init_call[:4] == [str(runtime_dirs["isolate"]), "--box-id", "7", "--init"]
