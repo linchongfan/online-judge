@@ -577,6 +577,10 @@ class LinuxIsolateBackend(SandboxBackend):
         state.stdout_file = work_dir / ".judge-sandbox-stdout"
         state.stderr_file = work_dir / ".judge-sandbox-stderr"
         shutil.copyfileobj(stdin, state.stdin_file.open("wb"))
+        # isolate drops to the per-box UID before opening /box/.../stdin.
+        # The judge service umask may be 077, so explicitly make the staged
+        # input readable without making it writable by the sandboxed program.
+        state.stdin_file.chmod(0o644)
         command_line = [
             str(self._isolate_path),
             "--box-id",
