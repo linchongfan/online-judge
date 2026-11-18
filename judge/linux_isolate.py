@@ -467,19 +467,22 @@ class LinuxIsolateBackend(SandboxBackend):
                 )
 
     def _map_path(self, value: str, box_dir: Path) -> str:
-        # The per-spawn task directory appears as /box inside the sandbox.
-        box_text = str(box_dir)
-        if value == box_text:
-            return _BOX_PATH
-        if value.startswith(box_text + os.sep):
-            return _BOX_PATH + value[len(box_text) :]
-        for source, destination in self._mounts:
+        # Choose the most specific matching mount. Toolchains and the current
+        # task directory may be nested under a common work root; a generic
+        # parent prefix must not hide the more specific /toolchains or /box
+        # mapping.
+        mappings = [(*mount, len(str(mount[0]))) for mount in self._mounts]
+        mappings.append((box_dir, _BOX_PATH, len(str(box_dir))))
+        best_length = -1
+        mapped = value
+        for source, destination, length in mappings:
             source_text = str(source)
-            if value == source_text:
-                return destination
-            if value.startswith(source_text + os.sep):
-                return destination + value[len(source_text) :]
-        return value
+            if value != source_text and not value.startswith(source_text + os.sep):
+                continue
+            if length > best_length:
+                best_length = length
+                mapped = destination + value[len(source_text) :]
+        return mapped
 
     def _sandbox_argv(self, argv: Sequence[str], box_dir: Path) -> list[str]:
         if not argv:

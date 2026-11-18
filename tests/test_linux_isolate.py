@@ -233,7 +233,7 @@ def test_spawn_uses_isolate_with_expected_limits(
     # the box at runtime.
     assert (work_dir / ".judge-sandbox-stdin").is_file()
     assert not (work_dir / ".judge-sandbox-stdout").exists()
-    assert run_call[-4:] == ["--", "/toolchains/python3.bin", "-I", "-B", "Main.py"]
+    assert run_call[-5:] == ["--", "/toolchains/python3.bin", "-I", "-B", "Main.py"]
 
 
 def _meta_state(backend: LinuxIsolateBackend, meta_root: Path, text: str) -> types.SimpleNamespace:
