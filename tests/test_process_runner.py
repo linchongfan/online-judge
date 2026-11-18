@@ -247,3 +247,23 @@ def test_isolate_cleanup_records_start_failure(tmp_path: Path) -> None:
     with patch("judge.linux_isolate.subprocess.run", side_effect=OSError("no such file")):
         backend._isolate_cleanup(state)  # type: ignore[arg-type]
     assert "OSError" in state.cleanup_error
+
+
+def test_isolate_disk_quota_requires_explicit_tmpfs_opt_out() -> None:
+    from unittest.mock import patch
+
+    backend = object.__new__(LinuxIsolateBackend)
+    backend._isolate_path = Path("/usr/bin/isolate")
+    backend._disable_disk_quota = True
+    with patch("judge.linux_isolate.subprocess.run") as run:
+        run.return_value = types.SimpleNamespace(returncode=0, stdout="", stderr="")
+        backend._init_box(10, 51200, 4096)
+        argv = run.call_args.args[0]
+    assert not any(str(arg).startswith("--quota=") for arg in argv)
+
+    backend._disable_disk_quota = False
+    with patch("judge.linux_isolate.subprocess.run") as run:
+        run.return_value = types.SimpleNamespace(returncode=0, stdout="", stderr="")
+        backend._init_box(10, 51200, 4096)
+        argv = run.call_args.args[0]
+    assert "--quota=51200,4096" in argv

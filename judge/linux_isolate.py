@@ -61,6 +61,7 @@ DISK_BLOCKS_ENV = "JUDGE_DISK_BLOCKS"
 DISK_INODES_ENV = "JUDGE_DISK_INODES"
 COMPILE_DISK_BLOCKS_ENV = "JUDGE_COMPILE_DISK_BLOCKS"
 COMPILE_DISK_INODES_ENV = "JUDGE_COMPILE_DISK_INODES"
+DISABLE_DISK_QUOTA_ENV = "JUDGE_DISABLE_DISK_QUOTA"
 
 DEFAULT_ISOLATE_PATH = "/usr/bin/isolate"
 DEFAULT_META_ROOT = "/var/lib/xinbaoyan-judge/meta"
@@ -394,6 +395,11 @@ class LinuxIsolateBackend(SandboxBackend):
         self._compile_disk_inodes = _env_int(
             self._env, COMPILE_DISK_INODES_ENV, max(4096, self._default_disk_inodes * 4)
         )
+        # Docker judge containers use a private, size-bounded /dev/shm for the
+        # isolate boxes. tmpfs does not implement quotactl; the container-wide
+        # shm_size is the hard disk ceiling in that deployment. Keep quota by
+        # default everywhere else and require an explicit opt-in to disable it.
+        self._disable_disk_quota = self._env.get(DISABLE_DISK_QUOTA_ENV) == "1"
         self._states: dict[int, _SpawnState] = {}
         self._lock = threading.Lock()
         self._next_box_id = os.getpid() % 1000
@@ -622,15 +628,17 @@ class LinuxIsolateBackend(SandboxBackend):
             raise
 
     def _init_box(self, box_id: int, disk_blocks: int, disk_inodes: int) -> None:
+        argv = [
+            str(self._isolate_path),
+            "--box-id",
+            str(box_id),
+            "--init",
+            "--cg",
+        ]
+        if not self._disable_disk_quota:
+            argv.append(f"--quota={disk_blocks},{disk_inodes}")
         result = subprocess.run(
-            [
-                str(self._isolate_path),
-                "--box-id",
-                str(box_id),
-                "--init",
-                "--cg",
-                f"--quota={disk_blocks},{disk_inodes}",
-            ],
+            argv,
             stdin=subprocess.DEVNULL,
             capture_output=True,
             text=True,
