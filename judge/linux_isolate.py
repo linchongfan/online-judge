@@ -736,26 +736,32 @@ class LinuxIsolateBackend(SandboxBackend):
             return
         state.cleanup_started = True
         # --cg is required: without it isolate's cg_remove() returns early and
-        # the per-run cgroup is left behind (accumulates until
-        # "Device or resource busy"). Failures are recorded and logged instead
-        # of being silently swallowed.
-        try:
-            result = subprocess.run(
-                [str(self._isolate_path), "--box-id", str(state.box_id), "--cleanup", "--cg"],
-                stdin=subprocess.DEVNULL,
-                capture_output=True,
-                text=True,
-                timeout=5,
-                check=False,
-            )
-        except (OSError, subprocess.TimeoutExpired) as exc:
-            state.cleanup_error = f"isolate --cleanup failed: {type(exc).__name__}: {exc}"
-            logger.error("%s", state.cleanup_error)
-            return
-        if result.returncode != 0:
+        # the per-run cgroup is left behind. Kernel process/cgroup teardown can
+        # lag the isolate supervisor exit, so a busy cgroup gets a few bounded
+        # retries; persistent failures are recorded and logged.
+        for attempt in range(1, 4):
+            try:
+                result = subprocess.run(
+                    [str(self._isolate_path), "--box-id", str(state.box_id), "--cleanup", "--cg"],
+                    stdin=subprocess.DEVNULL,
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                    check=False,
+                )
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                state.cleanup_error = f"isolate --cleanup failed: {type(exc).__name__}: {exc}"
+                logger.error("%s", state.cleanup_error)
+                return
+            if result.returncode == 0:
+                return
             detail = (result.stderr or result.stdout or "").strip()
+            if "Device or resource busy" in detail and attempt < 3:
+                time.sleep(0.05 * attempt)
+                continue
             state.cleanup_error = f"isolate --cleanup exited with {result.returncode}: {detail}"
             logger.error("%s", state.cleanup_error)
+            return
 
     def _state_for(self, process: subprocess.Popen[bytes]) -> _SpawnState:
         with self._lock:

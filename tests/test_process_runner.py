@@ -267,3 +267,22 @@ def test_isolate_disk_quota_requires_explicit_tmpfs_opt_out() -> None:
         backend._init_box(10, 51200, 4096)
         argv = run.call_args.args[0]
     assert "--quota=51200,4096" in argv
+
+
+def test_isolate_cleanup_retries_transient_busy_cgroup() -> None:
+    from unittest.mock import patch
+
+    backend = object.__new__(LinuxIsolateBackend)
+    backend._isolate_path = Path("/usr/bin/isolate")
+    state = types.SimpleNamespace(cleanup_started=False, box_id=10, cleanup_error="")
+    with (
+        patch("judge.linux_isolate.time.sleep"),
+        patch("judge.linux_isolate.subprocess.run") as run,
+    ):
+        run.side_effect = [
+            types.SimpleNamespace(returncode=2, stdout="", stderr="Device or resource busy"),
+            types.SimpleNamespace(returncode=0, stdout="", stderr=""),
+        ]
+        backend._isolate_cleanup(state)  # type: ignore[arg-type]
+    assert run.call_count == 2
+    assert state.cleanup_error == ""
