@@ -26,7 +26,7 @@ from app.models import (
     utcnow,
 )
 from app.schemas.submission import JudgeResultMessage, JudgeStartedMessage
-from app.services.contests import recompute_contest_results
+from app.services.contests import recompute_contest_user_results
 from app.services.queue_capacity import queue_capacity
 
 SUPERSEDED_ERROR = "Superseded by a newer judge attempt"
@@ -161,7 +161,10 @@ def process_judge_result(data: dict) -> bool:
             if submission.contest_id and not submission.is_sample_run:
                 contest = db.get(Contest, submission.contest_id)
                 if contest:
-                    recompute_contest_results(db, contest)
+                    # Only this user's score changes; re-rank from the
+                    # materialized ContestResult rows instead of walking every
+                    # registration and submission of the contest.
+                    recompute_contest_user_results(db, contest, submission.user_id)
         db.commit()
         return True
     except Exception:

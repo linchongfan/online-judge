@@ -15,7 +15,7 @@ from app.models import (
     WorkerStatus,
     utcnow,
 )
-from app.services.contests import recompute_contest_results
+from app.services.contests import recompute_contest_user_results
 from app.services.queue_capacity import queue_capacity
 
 # A heartbeat younger than this means the queue is actively being consumed;
@@ -47,7 +47,7 @@ def _expire_and_retry(db, task: JudgeTask, settings, error: str) -> tuple[bool, 
     if submission.contest_id:
         contest = db.get(Contest, submission.contest_id)
         if contest:
-            recompute_contest_results(db, contest)
+            recompute_contest_user_results(db, contest, submission.user_id)
     return False, True
 
 

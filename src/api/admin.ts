@@ -204,7 +204,7 @@ export function uploadAdminTestData(problemId: number, file: File): Promise<Admi
   return request<AdminTestDataUploadResult>(`/admin/problems/${problemId}/test-data`, {
     method: 'POST',
     body,
-    timeoutMs: 120_000,
+    timeoutMs: 180_000,
   })
 }
 
