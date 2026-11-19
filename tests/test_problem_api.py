@@ -145,3 +145,17 @@ def test_submission_idempotency_and_owner_access(client, admin_headers, user_hea
     records = client.get("/api/v1/submissions", headers=user_headers)
     assert records.status_code == 200
     assert records.json()["total"] == 1
+
+
+def test_problem_neighbors_reflect_published_list_order(client, admin_headers):
+    a_id = create_published_problem(client, admin_headers)
+    b_id = create_published_problem(client, admin_headers)
+
+    start = client.get(f"/api/v1/problems/{a_id}/neighbors")
+    assert start.status_code == 200, start.text
+    assert start.json()["next"] == b_id
+    assert start.json()["index"] >= 1
+
+    middle = client.get(f"/api/v1/problems/{b_id}/neighbors")
+    assert middle.status_code == 200
+    assert middle.json()["prev"] == a_id

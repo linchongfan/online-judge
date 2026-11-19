@@ -47,7 +47,7 @@ router.beforeEach(async (to) => {
   document.title = `${String(to.meta.title ?? '页面')} · 新保研`
   await initializeSession()
 
-  if ((to.meta.requiresAuth || to.meta.admin) && !session.loggedIn) {
+  if ((to.meta.requiresAuth || to.meta.admin) && !session.loggedIn && !session.degraded) {
     return {
       path: '/login',
       query: {
@@ -56,6 +56,8 @@ router.beforeEach(async (to) => {
       },
     }
   }
+  // Admin pages stay strict: a degraded (unconfirmed) session may not enter.
+  if (to.meta.admin && !session.loggedIn) return { path: '/problems' }
   if (to.meta.admin && session.role !== 'admin') return { path: '/problems' }
 })
 

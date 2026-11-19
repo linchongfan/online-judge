@@ -1,4 +1,5 @@
 import type {
+  ProblemNeighbors,
   Difficulty,
   Page,
   ProblemDetail,
@@ -35,6 +36,10 @@ export function listProblems(params: ProblemListParams = {}): Promise<Page<Probl
 
 export function getProblem(problemId: number, contestId?: number): Promise<ProblemDetail> {
   return request<ProblemDetail>(`/problems/${problemId}`, { query: { contest_id: contestId } })
+}
+
+export function getProblemNeighbors(problemId: number): Promise<ProblemNeighbors> {
+  return request<ProblemNeighbors>(`/problems/${problemId}/neighbors`)
 }
 
 export function getRandomProblem(): Promise<ProblemDetail> {

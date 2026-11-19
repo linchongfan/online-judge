@@ -18,6 +18,8 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.1",
+    "@vue/test-utils": "^2.6.0",
+    "happy-dom": "^21.0.4",
     "typescript": "~5.7.2",
     "vite": "^6.1.0",
     "vitest": "^5.1.0",

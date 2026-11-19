@@ -5,14 +5,14 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import CodeEditor from '../components/CodeEditor.vue'
 import DifficultyTag from '../components/DifficultyTag.vue'
 import StatusTag from '../components/StatusTag.vue'
-import { getProblem, getProblemSolution, listProblems, runProblemSample } from '../api/problems'
+import { getProblem, getProblemNeighbors, getProblemSolution, runProblemSample } from '../api/problems'
 import { createSubmission, listSubmissions } from '../api/submissions'
 import { getContest } from '../api/contests'
 import { getStudyPlan } from '../api/studyPlans'
 import { ApiError } from '../api/client'
 import { session } from '../stores/session'
 import { useSubmissionPolling } from '../composables/useSubmissionPolling'
-import { createIdempotencyKey, formatDateTime, formatMemoryKb, formatRuntimeMs, judgeStatusMap } from '../utils/format'
+import { createIdempotencyKey, formatDateTime, formatMemoryKb, formatRuntimeMs, isSubmissionResponseUnknown, judgeStatusMap } from '../utils/format'
 import type { Contest, JudgeStatus, Language, Problem, Solution, StudyPlanDetail, Submission } from '../types'
 
 const route = useRoute()
@@ -52,15 +52,29 @@ const solutionError = ref('')
 const problemSubmissions = ref<Submission[]>([])
 const contest = ref<Contest | null>(null)
 const plan = ref<StudyPlanDetail | null>(null)
-const globalProblemIds = ref<number[]>([])
+const neighbors = ref<{ prev: number | null; next: number | null; index: number; total: number } | null>(null)
 const problemIds = computed(() => {
   if (contest.value) return contest.value.problems.map(item => item.problemId)
   if (plan.value) return plan.value.problems.map(item => item.problemId)
-  return globalProblemIds.value
+  return []
 })
 const currentSubmission = ref<Submission | null>(null)
 const activeSubmissionId = ref<string | null>(null)
 const operation = ref<'sample' | 'submit'>('submit')
+// While viewing a historical result the live poller must not clobber it.
+const viewingHistory = ref(false)
+// Reuse one idempotency key per logical operation until a definitive response
+// arrives or the code/operation changes, so a lost response retried by the
+// user maps onto the same submission server-side.
+let pendingKey: { fingerprint: string; key: string } | null = null
+function nextIdempotencyKey(kind: 'sample' | 'submit'): string {
+  const fingerprint = `${problem.value.id}:${kind}:${language.value}:${code.value}`
+  if (pendingKey && pendingKey.fingerprint === fingerprint) return pendingKey.key
+  const key = createIdempotencyKey()
+  pendingKey = { fingerprint, key }
+  return key
+}
+function clearPendingKey() { pendingKey = null }
 const languageLabels: Record<Language, string> = { cpp: 'C++', c: 'C', java: 'Java', python: 'Python3' }
 let saveTimer: ReturnType<typeof setTimeout> | undefined
 let loadGeneration = 0
@@ -75,6 +89,7 @@ const polling = useSubmissionPolling(activeSubmissionId, {
   immediate: false,
   pollIntervalMs: 800,
   onUpdate: item => {
+    if (viewingHistory.value) return
     currentSubmission.value = item
     if (operation.value === 'sample') {
       running.value = item.status === 'PENDING' || item.status === 'JUDGING'
@@ -218,6 +233,7 @@ function requireLogin(): boolean {
   return false
 }
 function newSubmission(operationName: 'sample' | 'submit', accepted: { id: string; status: JudgeStatus }) {
+  viewingHistory.value = false
   operation.value = operationName
   activeSubmissionId.value = accepted.id
   judging.value = accepted.status
@@ -230,12 +246,20 @@ async function runSample() {
   consoleTab.value = 'run'
   running.value = true
   try {
-    const accepted = await runProblemSample(problem.value.id, { language: language.value, source: code.value, contestId: contest.value?.id, idempotencyKey: createIdempotencyKey() })
+    const accepted = await runProblemSample(problem.value.id, { language: language.value, source: code.value, contestId: contest.value?.id, idempotencyKey: nextIdempotencyKey('sample') })
     newSubmission('sample', accepted)
+    clearPendingKey()
   } catch (error) {
     running.value = false
     judging.value = 'idle'
-    ElMessage.error(error instanceof ApiError ? error.message : '样例运行失败')
+    if (isSubmissionResponseUnknown(error)) {
+      // The server may have created the submission: keep the idempotency key
+      // so a retry maps onto the same record.
+      ElMessage.warning('网络异常：运行结果未知，请重试同一操作')
+    } else {
+      clearPendingKey()
+      ElMessage.error(error instanceof ApiError ? error.message : '样例运行失败')
+    }
   }
 }
 async function submitCode() {
@@ -245,11 +269,19 @@ async function submitCode() {
   consoleTab.value = 'result'
   judging.value = 'PENDING'
   try {
-    const accepted = await createSubmission({ problemId: problem.value.id, contestId: contest.value?.id, language: language.value, source: code.value, idempotencyKey: createIdempotencyKey() })
+    const accepted = await createSubmission({ problemId: problem.value.id, contestId: contest.value?.id, language: language.value, source: code.value, idempotencyKey: nextIdempotencyKey('submit') })
     newSubmission('submit', accepted)
+    clearPendingKey()
   } catch (error) {
     judging.value = 'idle'
-    ElMessage.error(error instanceof ApiError ? error.message : '提交失败')
+    if (isSubmissionResponseUnknown(error)) {
+      // Response lost after the server likely accepted the submission: keep
+      // the idempotency key so retrying reuses the same submission.
+      ElMessage.warning('网络异常：提交结果未知，请重试同一操作')
+    } else {
+      clearPendingKey()
+      ElMessage.error(error instanceof ApiError ? error.message : '提交失败')
+    }
   }
 }
 async function copyText(text: string, successMessage = '样例输入已复制') {
@@ -270,14 +302,26 @@ function changeLeftTab(tab: string) {
   nextTick(() => document.querySelector('.problem-pane .description-scroll')?.scrollTo({ top: 0 }))
 }
 function goToProblem(offset: number) {
-  if (!problemIds.value.length || problemIndex.value < 0) return
-  const next = problemIds.value[(problemIndex.value + offset + problemIds.value.length) % problemIds.value.length]
+  let target: number | null = null
+  if (contest.value || plan.value) {
+    if (!problemIds.value.length || problemIndex.value < 0) return
+    target = problemIds.value[(problemIndex.value + offset + problemIds.value.length) % problemIds.value.length]
+  } else {
+    if (!neighbors.value) return
+    target = offset < 0 ? neighbors.value.prev : neighbors.value.next
+    if (target === null) {
+      ElMessage.info(offset < 0 ? '已经是第一题' : '已经是最后一题')
+      return
+    }
+  }
   const query: Record<string, number> = {}
   if (contest.value) query.contest = contest.value.id
   else if (plan.value) query.plan = plan.value.id
-  void router.push({ path: `/problems/${next}`, query })
+  void router.push({ path: `/problems/${target}`, query })
 }
 function showHistoryResult(item: Submission) {
+  polling.stop()
+  viewingHistory.value = true
   currentSubmission.value = item
   operation.value = 'submit'
   judging.value = 'done'
@@ -300,12 +344,22 @@ async function loadSolution() {
 }
 async function loadProblemSubmissions() {
   if (!session.loggedIn || !problem.value.id) { problemSubmissions.value = []; return }
-  try { problemSubmissions.value = (await listSubmissions({ problemId: problem.value.id, page: 1, pageSize: 6 })).items } catch { problemSubmissions.value = [] }
+  const generation = loadGeneration
+  try {
+    const items = (await listSubmissions({ problemId: problem.value.id, page: 1, pageSize: 6 })).items
+    if (generation !== loadGeneration) return
+    problemSubmissions.value = items
+  } catch {
+    if (generation === loadGeneration) problemSubmissions.value = []
+  }
 }
 async function loadWorkspace() {
   const generation = ++loadGeneration
   polling.stop()
   activeSubmissionId.value = null
+  // Reset synchronously BEFORE any await: loadNeighbors() runs in parallel
+  // and its (faster) response must survive this load cycle.
+  neighbors.value = null
   loading.value = true
   loadError.value = ''
   solution.value = null
@@ -313,11 +367,27 @@ async function loadWorkspace() {
   try {
     const contestId = route.query.contest ? Number(route.query.contest) : undefined
     const planId = route.query.plan ? Number(route.query.plan) : undefined
-    // Contest context is best-effort: cancelled/archived contests fall back to
-    // practice mode, and only ongoing contests keep submission context.
+    // Contest context: only definitive business states (not found / not
+    // ongoing) fall back to practice — and always with a visible notice.
+    // Transient failures (network, 5xx) must block the workspace instead of
+    // silently converting a contest submission into a practice one.
     let contestData: Contest | null = null
+    let contestNotice = ''
     if (contestId) {
-      try { contestData = await getContest(contestId) } catch { contestData = null }
+      try {
+        contestData = await getContest(contestId)
+      } catch (error) {
+        if (error instanceof ApiError && (error.status === 404 || error.status === 409 || error.status === 410)) {
+          contestData = null
+          contestNotice = '竞赛不存在或已取消，已按练习模式打开'
+        } else {
+          throw new Error('CONTEST_CONTEXT_UNAVAILABLE')
+        }
+      }
+      if (contestData && contestData.status !== 'ongoing') {
+        contestNotice = '竞赛未在进行中，已按练习模式打开'
+        contestData = null
+      }
     }
     let planData: StudyPlanDetail | null = null
     if (!contestData && planId) {
@@ -326,38 +396,62 @@ async function loadWorkspace() {
     const problemData = await getProblem(Number(route.params.id), contestData ? contestId : undefined)
     if (generation !== loadGeneration) return
     problem.value = problemData
-    contest.value = contestData && contestData.status === 'ongoing' ? contestData : null
+    contest.value = contestData
     plan.value = !contest.value && planData && planData.problems.some(item => item.problemId === problemData.id)
       ? planData
       : null
     loadDraft()
     void loadProblemSubmissions()
     if (activeLeftTab.value === 'solution') void loadSolution()
+    if (contestNotice) ElMessage.warning(contestNotice)
   } catch (error) {
-    if (generation === loadGeneration) loadError.value = error instanceof ApiError ? error.message : '题目加载失败'
+    if (generation !== loadGeneration) return
+    if (error instanceof Error && error.message === 'CONTEST_CONTEXT_UNAVAILABLE') {
+      loadError.value = '竞赛信息暂时无法加载，请稍后重试'
+    } else {
+      loadError.value = error instanceof ApiError ? error.message : '题目加载失败'
+    }
   } finally {
     if (generation === loadGeneration) loading.value = false
   }
 }
 
 watch(code, () => {
+  clearPendingKey()
   saved.value = false
   if (saveTimer) clearTimeout(saveTimer)
   saveTimer = setTimeout(() => { if (storageSet(draftKey(), code.value)) saved.value = true }, 500)
 })
-watch(() => [route.params.id, route.query.contest, route.query.plan], loadWorkspace)
+watch(() => [route.params.id, route.query.contest, route.query.plan], () => {
+  void loadWorkspace()
+  viewingHistory.value = false
+  void loadNeighbors(Number(route.params.id), loadGeneration)
+})
 watch(() => polling.error.value, (error) => {
   if (!error) return
-  // Permanent polling failure (network/auth/not-found): release the UI so the
-  // user can retry or navigate away instead of waiting forever.
+  // Only permanent failures release the UI; transient network/server errors
+  // keep the submission id and the composable's backoff retry loop running.
+  const permanent = error instanceof ApiError && (error.status === 401 || error.status === 403 || error.status === 404)
+  if (!permanent) return
   running.value = false
   judging.value = 'idle'
   polling.stop()
   ElMessage.error(error instanceof ApiError ? error.message : '判题状态获取失败，请稍后重试')
 })
+async function loadNeighbors(problemId: number, generation: number) {
+  // Decide from the ROUTE, not the previous problem's context: switching from
+  // a contest/plan back to practice must still load neighbor information.
+  if (route.query.contest || route.query.plan) return
+  try {
+    const data = await getProblemNeighbors(problemId)
+    if (generation !== loadGeneration) return
+    neighbors.value = data
+  } catch { /* 导航按钮仅在拿到相邻信息时可用 */ }
+}
+
 onMounted(() => {
   void loadWorkspace()
-  void listProblems({ page: 1, pageSize: 100 }).then(data => { globalProblemIds.value = data.items.map(item => item.id) }).catch(() => {})
+  void loadNeighbors(Number(route.params.id), loadGeneration)
   window.addEventListener('resize', clampConsoleToViewport)
   void nextTick(clampConsoleToViewport)
 })
@@ -378,7 +472,7 @@ onBeforeUnmount(() => {
         <span v-else-if="plan" class="context-label">{{ plan.title }}<i>/</i></span>
         <strong>{{ problem.id }}. {{ problem.title }}</strong><DifficultyTag :difficulty="problem.difficulty" />
       </div>
-      <div class="problem-switcher"><el-button text :icon="'ArrowLeft'" aria-label="上一题" @click="goToProblem(-1)" /><span>{{ problemIndex + 1 }} / {{ problemIds.length }}</span><el-button text :icon="'ArrowRight'" aria-label="下一题" @click="goToProblem(1)" /></div>
+      <div class="problem-switcher"><el-button text :icon="'ArrowLeft'" aria-label="上一题" @click="goToProblem(-1)" /><span>{{ neighbors && !contest && !plan ? `${neighbors.index} / ${neighbors.total}` : `${problemIndex + 1} / ${problemIds.length}` }}</span><el-button text :icon="'ArrowRight'" aria-label="下一题" @click="goToProblem(1)" /></div>
       <span class="prototype-note">真实判题服务</span>
     </div>
 

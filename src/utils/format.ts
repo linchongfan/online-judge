@@ -51,6 +51,17 @@ export function createIdempotencyKey(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`
 }
 
+/**
+ * Whether a failed submission request left the server-side outcome unknown
+ * (network loss, timeout, 5xx). In that case the idempotency key must be
+ * reused on retry: the server may already have created the submission.
+ */
+export function isSubmissionResponseUnknown(error: unknown): boolean {
+  if (!(error instanceof Error) || error.name !== 'ApiError') return true
+  const status = (error as { status?: number }).status ?? 0
+  return status === 0 || status === 408 || status >= 500
+}
+
 export function parseServerDate(value: string | number | Date): Date {
   if (value instanceof Date) return value
   if (typeof value === 'number') return new Date(value)

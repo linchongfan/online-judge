@@ -182,7 +182,9 @@ async function performRefresh(): Promise<TokenResponse> {
     setAccessToken(tokenResponse.accessToken)
     return tokenResponse
   } catch (error) {
-    clearAccessToken()
+    // Keep the access token on transient failures; request() only invokes the
+    // auth-failure handler (which clears the session) when the refresh
+    // credential itself is rejected with 401/403.
     throw error
   }
 }
@@ -223,13 +225,16 @@ export async function request<T>(path: string, options: ApiRequestOptions = {}):
   try {
     await refreshAccessToken()
   } catch (error) {
-    // Only a rejected credential invalidates the session; transient network
-    // failures must keep the user logged in.
     if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+      // The refresh credential itself was rejected: this is a permanent
+      // unauthenticated state.
       authFailureHandler?.(error)
+      // Callers decide whether authentication is required. Public requests never redirect.
+      throw originalError
     }
-    // Callers decide whether authentication is required. Public requests never redirect.
-    throw originalError
+    // Transient refresh failure (network, timeout, 5xx): propagate the refresh
+    // error so callers classify the session as degraded, NOT as a guest.
+    throw error
   }
 
   const retry = prepareRequest(path, options)
