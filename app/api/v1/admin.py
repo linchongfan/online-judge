@@ -1,6 +1,9 @@
+import asyncio
 import hashlib
 import io
+import shutil
 import zipfile
+from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from pathlib import Path
 from typing import Any
@@ -8,6 +11,7 @@ from typing import Any
 from fastapi import APIRouter, Query, Request, UploadFile, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import AdminUser, Db
@@ -84,6 +88,12 @@ from app.services.study_plans import (
 from app.services.test_data import TestDataService, TestDataValidationError
 
 router = APIRouter()
+
+# ZIP validation, extraction and fsync are CPU/IO heavy; running them on the
+# event loop would stall every request served by that Uvicorn worker. A small
+# dedicated pool bounds concurrent uploads instead of consuming the whole
+# default threadpool.
+_TEST_DATA_UPLOAD_EXECUTOR = ThreadPoolExecutor(max_workers=2, thread_name_prefix="test-data-upload")
 
 
 def admin_problem_dict(db: Session, problem: Problem) -> dict:
@@ -385,6 +395,10 @@ async def upload_test_data(problem_id: int, upload: UploadFile, request: Request
     content = await upload.read(settings.test_data_max_compressed_bytes + 1)
     if len(content) > settings.test_data_max_compressed_bytes:
         raise AppError(413, "TEST_DATA_TOO_LARGE", "测试数据压缩包超过大小限制")
+    # Serialize version allocation per problem: without the row lock two
+    # concurrent uploads both read MAX(version) and collide on the unique
+    # constraint.
+    db.scalar(select(Problem.id).where(Problem.id == problem_id).with_for_update())
     latest = db.scalar(select(func.max(TestDataVersion.version)).where(TestDataVersion.problem_id == problem_id)) or 0
     filename = Path(upload.filename or "test-data.zip").name[:255]
     version = TestDataVersion(
@@ -397,7 +411,11 @@ async def upload_test_data(problem_id: int, upload: UploadFile, request: Request
         created_by=admin.id,
     )
     db.add(version)
-    db.flush()
+    try:
+        db.flush()
+    except IntegrityError as exc:
+        db.rollback()
+        raise AppError(409, "TEST_DATA_VERSION_CONFLICT", "测试数据版本冲突，请重试") from exc
     destination = settings.storage_root.resolve() / "test-data" / f"problem-{problem_id}" / version.id
     service = TestDataService(
         TestDataLimits(
@@ -407,7 +425,9 @@ async def upload_test_data(problem_id: int, upload: UploadFile, request: Request
         )
     )
     try:
-        result = service.store(content, destination)
+        result = await asyncio.get_running_loop().run_in_executor(
+            _TEST_DATA_UPLOAD_EXECUTOR, service.store, content, destination
+        )
     except TestDataValidationError as exc:
         version.status = TestDataStatus.INVALID
         version.validation_errors = [item.model_dump() for item in exc.errors]
@@ -418,6 +438,12 @@ async def upload_test_data(problem_id: int, upload: UploadFile, request: Request
             "测试数据校验失败",
             {"versionId": version.id, "errors": version.validation_errors},
         ) from exc
+    except BaseException:
+        # Unexpected storage failure: never leave a half-written version
+        # directory behind.
+        shutil.rmtree(destination, ignore_errors=True)
+        db.rollback()
+        raise
     version.status = TestDataStatus.VALID
     version.storage_path = str(destination)
     version.uncompressed_size = sum(item.size for item in result.files)
@@ -451,7 +477,14 @@ async def upload_test_data(problem_id: int, upload: UploadFile, request: Request
         details={"versionId": version.id, "sha256": version.content_hash},
         ip_address=request_ip(request),
     )
-    db.commit()
+    try:
+        db.commit()
+    except BaseException:
+        # The immutable version directory was already published; remove it so
+        # a failed commit cannot leave an orphan the API can never reference.
+        db.rollback()
+        shutil.rmtree(destination, ignore_errors=True)
+        raise
     return {
         "id": version.id,
         "status": version.status,

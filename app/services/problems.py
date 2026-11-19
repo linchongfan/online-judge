@@ -2,7 +2,7 @@ import secrets
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import func, select, update
+from sqlalchemy import case, func, select, update
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import AppError
@@ -39,73 +39,108 @@ def get_problem(db: Session, problem_id: int, user: User | None = None, include_
 
 
 def problem_stats(db: Session, problem_id: int, user_id: int | None) -> dict:
-    submission_count = (
-        db.scalar(
-            select(func.count(Submission.id)).where(
-                Submission.problem_id == problem_id, Submission.is_sample_run.is_(False)
-            )
-        )
-        or 0
-    )
-    accepted_count = (
-        db.scalar(
-            select(func.count(Submission.id)).where(
-                Submission.problem_id == problem_id,
-                Submission.status == JudgeStatus.AC,
-                Submission.is_sample_run.is_(False),
-            )
-        )
-        or 0
-    )
-    judged_count = (
-        db.scalar(
-            select(func.count(Submission.id)).where(
-                Submission.problem_id == problem_id,
-                Submission.status.not_in([JudgeStatus.PENDING, JudgeStatus.JUDGING, JudgeStatus.SE]),
-                Submission.is_sample_run.is_(False),
-            )
-        )
-        or 0
-    )
-    solved_count = (
-        db.scalar(
-            select(func.count(func.distinct(Submission.user_id))).where(
-                Submission.problem_id == problem_id,
-                Submission.status == JudgeStatus.AC,
-                Submission.is_sample_run.is_(False),
-            )
-        )
-        or 0
-    )
-    progress = "untouched"
-    if user_id is not None:
-        statuses = db.scalars(
-            select(Submission.status).where(
-                Submission.problem_id == problem_id,
-                Submission.user_id == user_id,
-                Submission.is_sample_run.is_(False),
-            )
-        ).all()
-        if JudgeStatus.AC in statuses:
-            progress = "solved"
-        elif statuses:
-            progress = "attempted"
-    return {
-        "submission_count": submission_count,
-        "solved_count": solved_count,
-        "acceptance": round(accepted_count / judged_count * 100, 1) if judged_count else 0.0,
-        "progress": progress,
+    return problem_stats_batch(db, [problem_id], user_id).get(problem_id, _EMPTY_STATS)
+
+
+_EMPTY_STATS = {
+    "submission_count": 0,
+    "solved_count": 0,
+    "acceptance": 0.0,
+    "progress": "untouched",
+}
+
+
+def problem_stats_batch(db: Session, problem_ids: list[int], user_id: int | None) -> dict[int, dict]:
+    """Aggregate list statistics for many problems with a fixed number of queries.
+
+    The list endpoint used to run five queries per problem (hundreds per page).
+    All statistics are now computed with at most three grouped queries, so the
+    cost no longer grows with the number of problems on the page.
+    """
+    ids = list(dict.fromkeys(problem_ids))
+    if not ids:
+        return {}
+    base = (Submission.problem_id.in_(ids), Submission.is_sample_run.is_(False))
+    stats: dict[int, dict] = {
+        problem_id: {
+            "submission_count": 0,
+            "solved_count": 0,
+            "acceptance": 0.0,
+            "progress": "untouched",
+        }
+        for problem_id in ids
     }
+    counted = db.execute(
+        select(
+            Submission.problem_id,
+            func.count(Submission.id),
+            func.sum(case((Submission.status == JudgeStatus.AC, 1), else_=0)),
+            func.sum(
+                case(
+                    (
+                        Submission.status.not_in(
+                            [JudgeStatus.PENDING, JudgeStatus.JUDGING, JudgeStatus.SE]
+                        ),
+                        1,
+                    ),
+                    else_=0,
+                )
+            ),
+        )
+        .where(*base)
+        .group_by(Submission.problem_id)
+    ).all()
+    for problem_id, total, accepted, judged in counted:
+        entry = stats[problem_id]
+        entry["submission_count"] = int(total or 0)
+        accepted_count = int(accepted or 0)
+        judged_count = int(judged or 0)
+        entry["acceptance"] = (
+            round(accepted_count / judged_count * 100, 1) if judged_count else 0.0
+        )
+    solved = db.execute(
+        select(
+            Submission.problem_id, func.count(func.distinct(Submission.user_id))
+        )
+        .where(*base, Submission.status == JudgeStatus.AC)
+        .group_by(Submission.problem_id)
+    ).all()
+    for problem_id, solved_count in solved:
+        stats[problem_id]["solved_count"] = int(solved_count or 0)
+    if user_id is not None:
+        progress_rows = db.execute(
+            select(
+                Submission.problem_id,
+                func.max(case((Submission.status == JudgeStatus.AC, 1), else_=0)),
+                func.count(Submission.id),
+            )
+            .where(*base, Submission.user_id == user_id)
+            .group_by(Submission.problem_id)
+        ).all()
+        for problem_id, has_ac, attempts in progress_rows:
+            if has_ac:
+                stats[problem_id]["progress"] = "solved"
+            elif attempts:
+                stats[problem_id]["progress"] = "attempted"
+    return stats
+
+
+def serialize_list_items(db: Session, problems: list[Problem], user_id: int | None) -> list[dict]:
+    stats = problem_stats_batch(db, [problem.id for problem in problems], user_id)
+    return [
+        {
+            "id": problem.id,
+            "title": problem.title,
+            "difficulty": problem.difficulty,
+            "tags": [tag.name for tag in problem.tags],
+            **stats.get(problem.id, _EMPTY_STATS),
+        }
+        for problem in problems
+    ]
 
 
 def serialize_list_item(db: Session, problem: Problem, user_id: int | None) -> dict:
-    return {
-        "id": problem.id,
-        "title": problem.title,
-        "difficulty": problem.difficulty,
-        "tags": [tag.name for tag in problem.tags],
-        **problem_stats(db, problem.id, user_id),
-    }
+    return serialize_list_items(db, [problem], user_id)[0]
 
 
 def serialize_detail(db: Session, problem: Problem, user_id: int | None) -> dict:

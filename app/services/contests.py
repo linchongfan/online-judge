@@ -154,7 +154,7 @@ def register_for_contest(db: Session, contest: Contest, user: User) -> None:
         db.add(registration)
     registration.status = RegistrationStatus.REGISTERED
     db.flush()
-    recompute_contest_results(db, contest)
+    recompute_contest_user_results(db, contest, user.id)
 
 
 def cancel_registration(db: Session, contest: Contest, user: User) -> None:
@@ -171,6 +171,8 @@ def cancel_registration(db: Session, contest: Contest, user: User) -> None:
         )
         if result:
             db.delete(result)
+        db.flush()
+        _rerank_contest(db, contest)
         db.flush()
 
 
@@ -241,8 +243,146 @@ def publish_contest(db: Session, contest: Contest) -> None:
     contest.status = ContestPublication.PUBLISHED
 
 
+def _aggregate_contest_problem_items(
+    contest: Contest, items: list[Submission]
+) -> tuple[bool, datetime | None, int]:
+    """Return (solved, first_ac_at, wrong_attempts) for one problem's submissions.
+
+    ``items`` must already be ordered by (created_at, id); this preserves the
+    original ACM penalty definition exactly.
+    """
+    first_ac = next((item for item in items if item.status == JudgeStatus.AC), None)
+    wrong_attempts = sum(
+        item.status in PENALTY_STATUSES
+        and (first_ac is None or (item.created_at, item.id) < (first_ac.created_at, first_ac.id))
+        for item in items
+    )
+    return first_ac is not None, first_ac.created_at if first_ac else None, wrong_attempts
+
+
+def _group_contest_submissions(submissions: list[Submission]) -> dict[int, list[Submission]]:
+    grouped: dict[int, list[Submission]] = {}
+    for item in submissions:
+        grouped.setdefault(item.problem_id, []).append(item)
+    return grouped
+
+
+def _contest_user_score(
+    contest: Contest, problem_ids: list[int], grouped: dict[int, list[Submission]]
+) -> tuple[int, int, dict[int, dict]]:
+    solved_count = 0
+    total_penalty = 0
+    per_problem: dict[int, dict] = {}
+    for problem_id in problem_ids:
+        items = grouped.get(problem_id, [])
+        solved, first_ac_at, wrong_attempts = _aggregate_contest_problem_items(contest, items)
+        if solved and first_ac_at is not None:
+            solved_count += 1
+            total_penalty += int(
+                (utc_datetime(first_ac_at) - utc_datetime(contest.start_time)).total_seconds()
+            )
+            total_penalty += wrong_attempts * 20 * 60
+        per_problem[problem_id] = {
+            "solved": solved,
+            "first_ac_at": first_ac_at,
+            "wrong_attempts": wrong_attempts,
+            "attempts": len(items),
+        }
+    return solved_count, total_penalty, per_problem
+
+
+def _upsert_user_results(
+    db: Session,
+    contest: Contest,
+    user_id: int,
+    solved_count: int,
+    total_penalty: int,
+    per_problem: dict[int, dict],
+) -> None:
+    problem_ids = [entry.problem_id for entry in contest.problems]
+    existing = {
+        item.problem_id: item
+        for item in db.scalars(
+            select(ContestProblemResult).where(
+                ContestProblemResult.contest_id == contest.id,
+                ContestProblemResult.user_id == user_id,
+            )
+        ).all()
+    }
+    for problem_id in problem_ids:
+        result = existing.get(problem_id)
+        if result is None:
+            result = ContestProblemResult(
+                contest_id=contest.id, user_id=user_id, problem_id=problem_id
+            )
+            db.add(result)
+        for key, value in per_problem[problem_id].items():
+            setattr(result, key, value)
+    contest_result = db.scalar(
+        select(ContestResult).where(
+            ContestResult.contest_id == contest.id, ContestResult.user_id == user_id
+        )
+    )
+    if contest_result is None:
+        contest_result = ContestResult(contest_id=contest.id, user_id=user_id)
+        db.add(contest_result)
+    contest_result.solved_count = solved_count
+    contest_result.penalty_seconds = total_penalty
+
+
+def _rerank_contest(db: Session, contest: Contest) -> None:
+    """Re-rank registered users from the materialized ContestResult rows."""
+    rows = db.scalars(
+        select(ContestResult)
+        .join(
+            ContestRegistration,
+            (ContestRegistration.contest_id == ContestResult.contest_id)
+            & (ContestRegistration.user_id == ContestResult.user_id),
+        )
+        .where(
+            ContestResult.contest_id == contest.id,
+            ContestRegistration.status == RegistrationStatus.REGISTERED,
+        )
+        .order_by(
+            ContestResult.solved_count.desc(),
+            ContestResult.penalty_seconds.asc(),
+            ContestResult.user_id.asc(),
+        )
+    ).all()
+    previous_score: tuple[int, int] | None = None
+    previous_rank = 0
+    for index, row in enumerate(rows, start=1):
+        score = (row.solved_count, row.penalty_seconds)
+        rank = previous_rank if score == previous_score else index
+        previous_score, previous_rank = score, rank
+        row.rank = rank
+
+
+def recompute_contest_user_results(db: Session, contest: Contest, user_id: int) -> None:
+    """Incrementally refresh one user's contest score and re-rank the contest.
+
+    Used on every terminal contest submission and on registration, so a single
+    result no longer triggers a full walk over all registrations/problems.
+    """
+    problem_ids = [entry.problem_id for entry in contest.problems]
+    submissions = db.scalars(
+        select(Submission)
+        .where(
+            Submission.contest_id == contest.id,
+            Submission.user_id == user_id,
+            Submission.is_sample_run.is_(False),
+        )
+        .order_by(Submission.created_at, Submission.id)
+    ).all()
+    grouped = _group_contest_submissions(list(submissions))
+    solved_count, total_penalty, per_problem = _contest_user_score(contest, problem_ids, grouped)
+    _upsert_user_results(db, contest, user_id, solved_count, total_penalty, per_problem)
+    db.flush()
+    _rerank_contest(db, contest)
+
+
 def recompute_contest_results(db: Session, contest: Contest) -> None:
-    # Serialize recomputation for a contest; submission details remain the authoritative source.
+    """Full reconciliation (admin tool): one query per table, not per user."""
     db.scalar(select(Contest.id).where(Contest.id == contest.id).with_for_update())
     registrations = db.scalars(
         select(ContestRegistration).where(
@@ -250,73 +390,30 @@ def recompute_contest_results(db: Session, contest: Contest) -> None:
             ContestRegistration.status == RegistrationStatus.REGISTERED,
         )
     ).all()
+    user_ids = [registration.user_id for registration in registrations]
+    if not user_ids:
+        db.flush()
+        return
     problem_ids = [entry.problem_id for entry in contest.problems]
-    aggregates: list[tuple[int, int, int, dict[int, dict]]] = []
-    for registration in registrations:
-        solved_count = 0
-        total_penalty = 0
-        per_problem: dict[int, dict] = {}
-        for problem_id in problem_ids:
-            submissions = db.scalars(
-                select(Submission)
-                .where(
-                    Submission.contest_id == contest.id,
-                    Submission.user_id == registration.user_id,
-                    Submission.problem_id == problem_id,
-                    Submission.is_sample_run.is_(False),
-                )
-                .order_by(Submission.created_at, Submission.id)
-            ).all()
-            first_ac = next((item for item in submissions if item.status == JudgeStatus.AC), None)
-            wrong_attempts = sum(
-                item.status in PENALTY_STATUSES
-                and (first_ac is None or (item.created_at, item.id) < (first_ac.created_at, first_ac.id))
-                for item in submissions
-            )
-            solved = first_ac is not None
-            if first_ac is not None:
-                solved_count += 1
-                total_penalty += int(
-                    (utc_datetime(first_ac.created_at) - utc_datetime(contest.start_time)).total_seconds()
-                )
-                total_penalty += wrong_attempts * 20 * 60
-            per_problem[problem_id] = {
-                "solved": solved,
-                "first_ac_at": first_ac.created_at if first_ac else None,
-                "wrong_attempts": wrong_attempts,
-                "attempts": len(submissions),
-            }
-            result = db.scalar(
-                select(ContestProblemResult).where(
-                    ContestProblemResult.contest_id == contest.id,
-                    ContestProblemResult.user_id == registration.user_id,
-                    ContestProblemResult.problem_id == problem_id,
-                )
-            )
-            if result is None:
-                result = ContestProblemResult(
-                    contest_id=contest.id, user_id=registration.user_id, problem_id=problem_id
-                )
-                db.add(result)
-            for key, value in per_problem[problem_id].items():
-                setattr(result, key, value)
-        aggregates.append((registration.user_id, solved_count, total_penalty, per_problem))
-    aggregates.sort(key=lambda item: (-item[1], item[2], item[0]))
-    previous_score: tuple[int, int] | None = None
-    previous_rank = 0
-    for index, (user_id, solved_count, penalty, _) in enumerate(aggregates, start=1):
-        score = (solved_count, penalty)
-        rank = previous_rank if score == previous_score else index
-        previous_score, previous_rank = score, rank
-        contest_result = db.scalar(
-            select(ContestResult).where(ContestResult.contest_id == contest.id, ContestResult.user_id == user_id)
+    submissions = db.scalars(
+        select(Submission)
+        .where(
+            Submission.contest_id == contest.id,
+            Submission.user_id.in_(user_ids),
+            Submission.is_sample_run.is_(False),
         )
-        if contest_result is None:
-            contest_result = ContestResult(contest_id=contest.id, user_id=user_id)
-            db.add(contest_result)
-        contest_result.solved_count = solved_count
-        contest_result.penalty_seconds = penalty
-        contest_result.rank = rank
+        .order_by(Submission.created_at, Submission.id)
+    ).all()
+    grouped: dict[int, list[Submission]] = {}
+    for item in submissions:
+        grouped.setdefault(item.user_id, []).append(item)
+    for user_id in user_ids:
+        solved_count, total_penalty, per_problem = _contest_user_score(
+            contest, problem_ids, _group_contest_submissions(grouped.get(user_id, []))
+        )
+        _upsert_user_results(db, contest, user_id, solved_count, total_penalty, per_problem)
+    db.flush()
+    _rerank_contest(db, contest)
     db.flush()
 
 

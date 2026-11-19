@@ -1,0 +1,115 @@
+name: xinbaoyan-docker
+
+# Production container topology used by the current deployment.
+# Build from a clean checkout:
+#   docker build -f deploy/docker/backend.Dockerfile  -t xinbaoyan-backend:local  .
+#   docker build -f deploy/docker/frontend.Dockerfile -t xinbaoyan-frontend:local .
+#   docker build -f deploy/docker/judge.Dockerfile    -t xinbaoyan-judge:local    .
+# Then: docker compose -f deploy/docker/docker-compose.yml up -d
+#
+# Secrets live in the external env files referenced below and are never
+# committed. No repository-external patch scripts are required: the fixes
+# they used to inject now live in app/tasks/consumer.py and
+# judge/linux_isolate.py.
+
+x-backend: &backend
+  image: xinbaoyan-backend:local
+  network_mode: host
+  env_file: /opt/xinbaoyan-docker/app.container.env
+  user: "997:997"
+  restart: unless-stopped
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  read_only: true
+  tmpfs: [/tmp]
+  volumes:
+    - /var/lib/xinbaoyan/data:/var/lib/xinbaoyan/data
+
+services:
+  frontend:
+    image: xinbaoyan-frontend:local
+    network_mode: host
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      api:
+        condition: service_healthy
+
+  api:
+    <<: *backend
+    command: ["python", "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000", "--workers", "2"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/ready', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  result-consumer:
+    <<: *backend
+    command: ["python", "scripts/run_consumer.py"]
+
+  maintenance:
+    <<: *backend
+    command: ["python", "scripts/run_judge_maintenance.py"]
+
+  migrate:
+    <<: *backend
+    restart: "no"
+    env_file:
+      - /opt/xinbaoyan-docker/app.container.env
+      - /etc/xinbaoyan/infra.env
+    command: ["bash", "-lc", "python -m alembic upgrade head && python scripts/ensure_default_users.py"]
+
+  backup:
+    image: xinbaoyan-backend:local
+    network_mode: host
+    env_file: /etc/xinbaoyan/infra.env
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    volumes:
+      - /etc/xinbaoyan/infra.env:/etc/xinbaoyan/infra.env:ro
+      - /var/lib/xinbaoyan/data:/var/lib/xinbaoyan/data:ro
+      - /var/backups/xinbaoyan:/var/backups/xinbaoyan
+    command: ["bash", "-lc", "while true; do bash deploy/linux/backup.sh; sleep 86400; done"]
+
+  judge-worker:
+    image: xinbaoyan-judge:local
+    profiles: ["judge"]
+    network_mode: host
+    env_file: /etc/xinbaoyan-judge/judge.env
+    user: "0:0"
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add: [SYS_ADMIN, SYS_CHROOT, SETUID, SETGID, SYS_RESOURCE, CHOWN, DAC_OVERRIDE, FOWNER, KILL, NET_ADMIN]
+    security_opt: [apparmor:unconfined, seccomp=unconfined]
+    read_only: true
+    shm_size: 512m
+    tmpfs:
+      - /tmp
+      - /run
+    volumes:
+      - /var/lib/xinbaoyan-judge/work:/var/lib/xinbaoyan-judge/work
+      - /var/lib/xinbaoyan-judge/meta:/var/lib/xinbaoyan-judge/meta
+      - /var/lib/xinbaoyan-judge/isolate:/var/local/lib/isolate
+      - /sys/fs/cgroup/isolate:/sys/fs/cgroup/isolate:rw
+    cgroup: host
+    # The judge image ships an empty /opt/judge/rootfs. The verified deployment
+    # mounts the container's own root filesystem read-only (plus /toolchains)
+    # and relies on the private, size-bounded /dev/shm for box storage; tmpfs
+    # does not implement quotactl, so the isolate quota is explicitly disabled
+    # and shm_size remains the hard disk ceiling.
+    environment:
+      JUDGE_LINUX_ROOTFS: /
+      JUDGE_DISABLE_DISK_QUOTA: "1"
+    command: ["python", "scripts/run_judge_worker.py"]

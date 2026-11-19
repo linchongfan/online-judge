@@ -20,7 +20,7 @@ from app.services.problems import (
     problem_neighbors,
     random_problem,
     serialize_detail,
-    serialize_list_item,
+    serialize_list_items,
 )
 from app.services.submissions import create_sample_run
 
@@ -43,7 +43,7 @@ def problems(
         raise AppError(401, "AUTH_REQUIRED", "登录后才能按完成状态筛选")
     items, total = list_problems(db, user, page, page_size, keyword, difficulty, tag, progress)
     return make_page(
-        [serialize_list_item(db, item, user.id if user else None) for item in items], total, page, page_size
+        serialize_list_items(db, items, user.id if user else None), total, page, page_size
     )
 
 
