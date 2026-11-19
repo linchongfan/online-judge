@@ -1,0 +1,20 @@
+# Build context exclusions: the images only need source, tests and deploy files.
+# Keeping the virtualenv, local data, docs and media out of the context makes
+# rebuilds on small servers much cheaper.
+.git
+.github
+.venv
+node_modules
+dist
+data
+logs
+tools
+bgimg
+docs
+*.db
+*.sqlite3
+*.tsbuildinfo
+.pytest_cache
+.mypy_cache
+.ruff_cache
+__pycache__
