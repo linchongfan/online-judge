@@ -118,7 +118,12 @@ function goToProblem(submission: Pick<Submission, 'problemId' | 'contestId'>) {
 watch([keyword, status, language], () => { currentPage.value = 1; void loadRecords() })
 watch(currentPage, () => { void loadRecords() })
 watch(detailVisible, (visible) => {
-  if (!visible) selectedSubmission.value = undefined
+  if (!visible) {
+    // Invalidate any in-flight detail fetch so a slow response cannot
+    // repopulate the dialog after it was closed.
+    detailGeneration += 1
+    selectedSubmission.value = undefined
+  }
 })
 
 void loadRecords()
@@ -126,7 +131,14 @@ void getUserStats().then(value => { stats.value = value }).catch(() => {})
 poller = setInterval(() => {
   if (records.value.some(item => item.status === 'PENDING' || item.status === 'JUDGING')) void loadRecords()
   if (selectedSubmission.value && ['PENDING', 'JUDGING'].includes(selectedSubmission.value.status)) {
-    void getSubmission(selectedSubmission.value.id).then(item => { selectedSubmission.value = item }).catch(() => {})
+    const targetId = selectedSubmission.value.id
+    const current = detailGeneration
+    void getSubmission(targetId)
+      .then(item => {
+        // Guard against A→B switches and post-close updates.
+        if (current === detailGeneration && selectedSubmission.value?.id === targetId) selectedSubmission.value = item
+      })
+      .catch(() => {})
   }
 }, 4000)
 onBeforeUnmount(() => { if (poller) clearInterval(poller); generation += 1 })

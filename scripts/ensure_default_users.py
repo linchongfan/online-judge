@@ -1,9 +1,17 @@
-"""Idempotently create the default admin and test accounts after deployment.
+"""Idempotently create initial accounts after deployment (explicit opt-in).
 
-Runs automatically at the end of ``deploy/linux/deploy.sh`` (disable with
-``CREATE_DEFAULT_USERS=0``). Credentials can be overridden via environment
-variables before first deploy; afterwards the script only reports that the
-accounts already exist. Passwords are never printed.
+There are intentionally NO built-in default credentials. A fresh production
+deploy creates no accounts at all; use the interactive ``scripts/create_admin.py``
+instead, or opt in here by providing every credential via environment variables:
+
+* ``CREATE_DEFAULT_USERS=1`` plus ``DEFAULT_ADMIN_USERNAME`` /
+  ``DEFAULT_ADMIN_PASSWORD`` / ``DEFAULT_ADMIN_EMAIL`` creates the admin.
+* ``CREATE_DEFAULT_TEST_USER=1`` plus ``DEFAULT_TEST_USERNAME`` /
+  ``DEFAULT_TEST_PASSWORD`` / ``DEFAULT_TEST_EMAIL`` additionally creates the
+  test user. Never enable this on a public deployment.
+
+The script is idempotent: existing accounts are reported and left untouched.
+Passwords are never printed.
 """
 
 from __future__ import annotations
@@ -26,14 +34,10 @@ class _AccountSpec:
     role: UserRole
 
 
-DEFAULTS: dict[str, _AccountSpec] = {
+SPECS: dict[str, _AccountSpec] = {
     "admin": _AccountSpec(nickname="管理员", role=UserRole.ADMIN),
     "test": _AccountSpec(nickname="测试用户", role=UserRole.USER),
 }
-
-DEFAULT_USERNAMES = {"admin": "admin@123321", "test": "test@123456"}
-DEFAULT_PASSWORDS = {"admin": "admin@123321", "test": "test@123456"}
-DEFAULT_EMAILS = {"admin": "admin@xinbaoyan.local", "test": "test@xinbaoyan.local"}
 
 ENV_KEYS = {
     "admin": ("DEFAULT_ADMIN_USERNAME", "DEFAULT_ADMIN_PASSWORD", "DEFAULT_ADMIN_EMAIL"),
@@ -51,22 +55,32 @@ def _validate_password(password: str) -> None:
         raise SystemExit("Default passwords must contain letters and digits, min 8 characters")
 
 
-def ensure_default_users(
-    db: Session,
-    *,
-    admin_username: str = DEFAULT_USERNAMES["admin"],
-    admin_password: str = DEFAULT_PASSWORDS["admin"],
-    admin_email: str = DEFAULT_EMAILS["admin"],
-    test_username: str = DEFAULT_USERNAMES["test"],
-    test_password: str = DEFAULT_PASSWORDS["test"],
-    test_email: str = DEFAULT_EMAILS["test"],
-) -> list[str]:
-    """Create missing default accounts; return one human-readable status per account."""
+def _resolve_accounts() -> list[tuple[str, str, str, str]]:
+    """Return (kind, username, password, email) tuples for explicitly configured accounts."""
+    if os.environ.get("CREATE_DEFAULT_USERS") != "1":
+        # Default: create nothing. Accounts are provisioned interactively via
+        # scripts/create_admin.py unless the operator explicitly opts in here.
+        return []
+    accounts: list[tuple[str, str, str, str]] = []
+    for kind, keys in ENV_KEYS.items():
+        username, password, email = (os.environ.get(key, "").strip() for key in keys)
+        if kind == "test" and os.environ.get("CREATE_DEFAULT_TEST_USER") != "1":
+            if username or password or email:
+                raise SystemExit("Test user requested without CREATE_DEFAULT_TEST_USER=1; refusing to create it.")
+            continue
+        missing = [key for key, value in zip(keys, (username, password, email), strict=True) if not value]
+        if missing:
+            raise SystemExit(
+                f"Cannot create the default {kind!r} account: missing environment variables {', '.join(missing)}. "
+                "Provide all of them, or use scripts/create_admin.py for an interactive admin setup."
+            )
+        accounts.append((kind, username, password, email))
+    return accounts
 
-    accounts = (
-        ("admin", admin_username, admin_password, admin_email),
-        ("test", test_username, test_password, test_email),
-    )
+
+def ensure_default_users(db: Session) -> list[str]:
+    """Create the configured default accounts; return one status message each."""
+    accounts = _resolve_accounts()
     for _kind, username, password, _email in accounts:
         _validate_username(username)
         _validate_password(password)
@@ -76,7 +90,7 @@ def ensure_default_users(
         if db.scalar(select(User).where(User.username == username)) is not None:
             messages.append(f"{kind}: account {username!r} already exists, skipped")
             continue
-        spec = DEFAULTS[kind]
+        spec = SPECS[kind]
         db.add(
             User(
                 username=username,
@@ -100,20 +114,9 @@ def ensure_default_users(
 
 
 def main() -> None:
-    overrides = {}
-    for kind, keys in ENV_KEYS.items():
-        username = os.environ.get(keys[0])
-        password = os.environ.get(keys[1])
-        email = os.environ.get(keys[2])
-        if username:
-            overrides[f"{kind}_username"] = username
-        if password:
-            overrides[f"{kind}_password"] = password
-        if email:
-            overrides[f"{kind}_email"] = email
     db = SessionLocal()
     try:
-        for message in ensure_default_users(db, **overrides):
+        for message in ensure_default_users(db):
             print(message)
     finally:
         db.close()

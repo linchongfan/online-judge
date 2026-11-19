@@ -422,7 +422,7 @@ async def upload_test_data(problem_id: int, upload: UploadFile, request: Request
     version.storage_path = str(destination)
     version.uncompressed_size = sum(item.size for item in result.files)
     version.test_case_count = result.test_count
-    version.sample_count = sum(case.category != "hidden" for case in result.cases)
+    version.sample_count = sum(case.category == "sample" for case in result.cases)
     version.content_hash = hashlib.sha256("".join(item.sha256 for item in result.files).encode()).hexdigest()
     for case in result.cases:
         db.add(
@@ -431,7 +431,7 @@ async def upload_test_data(problem_id: int, upload: UploadFile, request: Request
                 case_number=case.number,
                 input_key=case.input.stored_path,
                 output_key=case.output.stored_path,
-                is_sample=case.category != "hidden",
+                is_sample=case.category == "sample",
                 input_size=case.input.size,
                 output_size=case.output.size,
             )

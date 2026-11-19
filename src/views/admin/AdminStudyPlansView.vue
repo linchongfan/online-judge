@@ -207,20 +207,25 @@ function problemStatusLabel(problemId: number | null): string {
 }
 
 function openCreate() {
+  // A slow detail load for a previous row must never overwrite the fresh form.
+  editGeneration += 1
   editingId.value = null
   form.value = emptyForm()
   problemOptionsError.value = ''
   dialogVisible.value = true
   void searchProblems('')
 }
+let editGeneration = 0
 async function openEdit(row: AdminStudyPlanSummary) {
   if (row.status === 'archived') {
     ElMessage.info('已归档的学习计划不可编辑')
     return
   }
+  const generation = ++editGeneration
   editingLoadingId.value = row.id
   try {
     const detail = await getAdminStudyPlan(row.id)
+    if (generation !== editGeneration) return
     mergeProblemOptions(detail.problems.map(item => ({
       id: item.problemId,
       title: item.title,
@@ -243,9 +248,9 @@ async function openEdit(row: AdminStudyPlanSummary) {
     dialogVisible.value = true
     void searchProblems('')
   } catch (error) {
-    ElMessage.error(adminErrorMessage(error, '学习计划详情加载失败'))
+    if (generation === editGeneration) ElMessage.error(adminErrorMessage(error, '学习计划详情加载失败'))
   } finally {
-    editingLoadingId.value = null
+    if (generation === editGeneration) editingLoadingId.value = null
   }
 }
 

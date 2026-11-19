@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import signal
 import subprocess
+import threading
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -54,6 +55,9 @@ class SandboxExecutionInfo:
     memory_exceeded: bool = False
     output_exceeded: bool = False
     infrastructure_error: str = ""
+    # Authoritative program exit code reported by the backend (e.g. isolate's
+    # meta ``exitcode``/``exitsig``), overriding the supervisor process exit.
+    exit_code: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -201,6 +205,14 @@ class SandboxBackend(ABC):
     def execution_info(self, process: subprocess.Popen[bytes]) -> SandboxExecutionInfo:
         """Return authoritative accounting and termination reasons, if available."""
         return SandboxExecutionInfo()
+
+    def output_stop_event(self, process: subprocess.Popen[bytes]) -> threading.Event | None:
+        """Set by supervising backends when their hard output cap trips.
+
+        The runner consumes this event to terminate the supervised process
+        immediately instead of waiting for the next poll iteration.
+        """
+        return None
 
 
 class LocalSubprocessBackend(SandboxBackend):

@@ -1,6 +1,7 @@
 import json
 from hashlib import sha256
-from secrets import compare_digest, randbelow
+from hmac import compare_digest
+from secrets import randbelow
 from threading import Lock
 from time import monotonic
 from typing import Any
@@ -9,6 +10,39 @@ import redis
 
 from app.core.config import get_settings
 from app.core.exceptions import AppError
+
+# Atomic compare/count/consume: concurrent requests can never share one
+# attempt budget or consume a valid code twice. The comparison runs inside
+# Redis (not constant-time), which is acceptable because the codes live in
+# the server-side store and latency is not attacker-observable across the
+# trust boundary.
+_VERIFY_SCRIPT = """
+local raw = redis.call('GET', KEYS[1])
+if not raw then
+  return 0
+end
+local data = cjson.decode(raw)
+if tonumber(data.attempts) >= 5 then
+  redis.call('DEL', KEYS[1])
+  return 0
+end
+if data.hash == ARGV[1] then
+  if ARGV[2] == '1' then
+    redis.call('DEL', KEYS[1])
+  end
+  return 1
+end
+data.attempts = tonumber(data.attempts) + 1
+local encoded = cjson.encode(data)
+-- Preserve the remaining TTL without KEPTTL (Redis < 6 has no KEPTTL).
+local ttl = redis.call('PTTL', KEYS[1])
+if ttl > 0 then
+  redis.call('SET', KEYS[1], encoded, 'PX', ttl)
+else
+  redis.call('SET', KEYS[1], encoded)
+end
+return 0
+"""
 
 
 class VerificationCodeService:
@@ -46,22 +80,8 @@ class VerificationCodeService:
     def verify(self, email: str, code: str, *, consume: bool = True) -> bool:
         key = self._key(email)
         try:
-            client = self._client()
-            raw = client.get(key)
-            if raw is None:
-                return False
-            data = json.loads(raw)
-            expected = data["hash"]
-            if int(data["attempts"]) >= 5:
-                client.delete(key)
-                return False
-            valid = compare_digest(expected, self._hash(email, code))
-            if valid and consume:
-                client.delete(key)
-            elif not valid:
-                data["attempts"] = int(data["attempts"]) + 1
-                client.set(key, json.dumps(data), keepttl=True)
-            return valid
+            result = self._client().eval(_VERIFY_SCRIPT, 1, key, self._hash(email, code), "1" if consume else "0")
+            return bool(result)
         except redis.RedisError as exc:
             if get_settings().is_production:
                 raise AppError(503, "VERIFICATION_UNAVAILABLE", "验证码服务暂时不可用") from exc

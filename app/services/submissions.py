@@ -1,6 +1,7 @@
 from hashlib import sha256
 
 from sqlalchemy import func, or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -70,28 +71,10 @@ def _check_submission_capacity(db: Session, user: User) -> None:
     settings = get_settings()
     if not get_setting(db, "submissions_enabled"):
         raise AppError(503, "SUBMISSIONS_PAUSED", "判题提交暂时关闭，浏览和登录不受影响")
-    total_queued = (
-        db.scalar(
-            select(func.count(Submission.id)).where(Submission.status.in_([JudgeStatus.PENDING, JudgeStatus.JUDGING]))
-        )
-        or 0
-    )
-    if total_queued >= int(get_setting(db, "global_queue_limit")):
-        raise AppError(503, "GLOBAL_QUEUE_FULL", "判题队列已满，请稍后再试")
     if not rate_limiter.allow(
         f"submission:{user.id}", settings.submission_rate_limit, settings.submission_rate_window_seconds
     ):
         raise AppError(429, "SUBMISSION_RATE_LIMITED", "提交过于频繁，请稍后再试")
-    queued = (
-        db.scalar(
-            select(func.count(Submission.id)).where(
-                Submission.user_id == user.id, Submission.status.in_([JudgeStatus.PENDING, JudgeStatus.JUDGING])
-            )
-        )
-        or 0
-    )
-    if queued >= settings.max_queued_submissions_per_user:
-        raise AppError(429, "USER_QUEUE_FULL", "等待判题的提交过多，请稍后提交")
 
 
 def _create_record(
@@ -105,6 +88,8 @@ def _create_record(
     sample_case: TestCase | None = None,
     sample_run: bool = False,
 ) -> Submission:
+    from app.services.queue_capacity import queue_capacity, reserve_or_raise
+
     version = current_test_data(db, problem.id)
     if version is None:
         raise AppError(409, "TEST_DATA_UNAVAILABLE", "题目尚无可用测试数据")
@@ -120,12 +105,42 @@ def _create_record(
         sample_case_id=sample_case.id if sample_case else None,
     )
     db.add(submission)
-    db.flush()
-    task = JudgeTask(submission_id=submission.id)
-    db.add(task)
-    db.flush()
-    db.add(OutboxMessage(task_id=task.id))
-    db.commit()
+    try:
+        db.flush()
+    except IntegrityError:
+        # Concurrent request with the same idempotency key: never surface a
+        # 500/503; hand back the already-created submission after verifying
+        # the payloads really match.
+        db.rollback()
+        existing = _existing_submission(db, user.id, key)
+        if existing is None:
+            raise
+        _assert_same_request(existing, problem.id, contest.id if contest else None, language, source, sample_run)
+        return existing
+    # Every other validation has passed; only now bind a queue slot to this
+    # submission so failures below cannot leak reservations.
+    settings = get_settings()
+    try:
+        reserve_or_raise(
+            db,
+            submission.id,
+            user.id,
+            int(get_setting(db, "global_queue_limit")),
+            settings.max_queued_submissions_per_user,
+        )
+    except AppError:
+        db.rollback()
+        raise
+    try:
+        task = JudgeTask(submission_id=submission.id)
+        db.add(task)
+        db.flush()
+        db.add(OutboxMessage(task_id=task.id))
+        db.commit()
+    except Exception:
+        db.rollback()
+        queue_capacity.release(submission.id)
+        raise
     from app.tasks.dispatcher import dispatch_outbox
 
     dispatch_outbox(task.id)

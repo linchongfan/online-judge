@@ -52,6 +52,61 @@ def create_published_problem(client, admin_headers):
     return problem_id
 
 
+def archive_bytes_with(entries):
+    content = io.BytesIO()
+    with zipfile.ZipFile(content, "w", zipfile.ZIP_DEFLATED) as archive:
+        for name, text in entries:
+            archive.writestr(name, text)
+    return content.getvalue()
+
+
+SAMPLE_LAYOUTS = {
+    "root": [("1.in", "5 6\n"), ("1.out", "11\n")],
+    "top_dir": [("problem/1.in", "5 6\n"), ("problem/1.out", "11\n")],
+    "grouped": [
+        ("sample/1.in", "1 2\n"),
+        ("sample/1.out", "3\n"),
+        ("hidden/1.in", "10 20\n"),
+        ("hidden/1.out", "30\n"),
+    ],
+    "grouped_top_dir": [
+        ("problem/sample/1.in", "1 2\n"),
+        ("problem/sample/1.out", "3\n"),
+        ("problem/hidden/1.in", "10 20\n"),
+        ("problem/hidden/1.out", "30\n"),
+    ],
+}
+
+
+def test_uploaded_default_layout_cases_are_never_exposed_as_samples(client, admin_headers):
+    # Root/ordinary top-level directory cases are NOT public samples; only
+    # explicit "sample/" files may appear in the public problem detail.
+    for title, entries in SAMPLE_LAYOUTS.items():
+        created = client.post("/api/v1/admin/problems", json=problem_payload(title=title), headers=admin_headers)
+        assert created.status_code == 201, created.text
+        problem_id = created.json()["id"]
+        uploaded = client.post(
+            f"/api/v1/admin/problems/{problem_id}/test-data",
+            files={"upload": ("data.zip", archive_bytes_with(entries), "application/zip")},
+            headers=admin_headers,
+        )
+        assert uploaded.status_code == 201, uploaded.text
+        expected_samples = sum(1 for name, _ in entries if name.endswith("sample/1.in"))
+        assert uploaded.json()["sampleCount"] == expected_samples, title
+        published = client.post(f"/api/v1/admin/problems/{problem_id}/publish", headers=admin_headers)
+        assert published.status_code == 200, published.text
+        detail = client.get(f"/api/v1/problems/{problem_id}")
+        assert detail.status_code == 200, detail.text
+        samples = detail.json()["samples"]
+        assert len(samples) == expected_samples, title
+        if expected_samples:
+            assert samples == [{"input": "1 2\n", "output": "3\n", "explanation": None}], title
+        # Hidden and default-case content must never be visible in the detail.
+        assert "10 20" not in detail.text and "30\n" not in detail.text, title
+        if title in ("root", "top_dir"):
+            assert "5 6" not in detail.text and "11\n" not in detail.text, title
+
+
 def test_problem_publish_and_hidden_data_boundary(client, admin_headers):
     problem_id = create_published_problem(client, admin_headers)
     listed = client.get("/api/v1/problems")
@@ -90,3 +145,17 @@ def test_submission_idempotency_and_owner_access(client, admin_headers, user_hea
     records = client.get("/api/v1/submissions", headers=user_headers)
     assert records.status_code == 200
     assert records.json()["total"] == 1
+
+
+def test_problem_neighbors_reflect_published_list_order(client, admin_headers):
+    a_id = create_published_problem(client, admin_headers)
+    b_id = create_published_problem(client, admin_headers)
+
+    start = client.get(f"/api/v1/problems/{a_id}/neighbors")
+    assert start.status_code == 200, start.text
+    assert start.json()["next"] == b_id
+    assert start.json()["index"] >= 1
+
+    middle = client.get(f"/api/v1/problems/{b_id}/neighbors")
+    assert middle.status_code == 200
+    assert middle.json()["prev"] == a_id

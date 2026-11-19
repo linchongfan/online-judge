@@ -111,6 +111,8 @@ docker compose run --rm migrate
 
 同类兼容补丁也用于 `app/tasks/consumer.py`：新版 redis-py 的 `BRPOPLPUSH` 直接返回 bytes，而原代码按元组取 `item[1]`，会导致结果堆积在队列、提交长期 PENDING。
 
+> 注意：该 consumer 问题已在本仓库修复（单值处理 + 非对象 envelope 死信），并附真实 Redis 集成测试。部署包含此修复的版本后，`patch-backend-image.sh` 中的 consumer 补丁应移除，避免旧补丁覆盖新实现。
+
 ## 6. 备份与恢复
 
 `backup` 容器每天执行 `deploy/linux/backup.sh`，产物位于 `/var/backups/xinbaoyan/<UTC 时间戳>/`：
@@ -133,7 +135,7 @@ systemctl enable --now nginx    # 恢复宿主机 Nginx + systemd 方案
 
 ## 8. 已知限制
 
-- 前端当前为明文 HTTP（纯 IP 部署，无受信任证书）；配置域名后应切回 HTTPS 方案。
+- 对外服务必须经 HTTPS 暴露：应用生产模式强制 `REFRESH_COOKIE_SECURE=true`，systemd 方案的 `bootstrap.sh`/`configure.sh` 已拒绝裸 IP。当前若以明文 HTTP（纯 IP）对外提供， refresh 会话无法通过生产配置校验，仅供临时联调；配置域名与受信任证书后应切回 HTTPS 方案。
 - `judge-worker` 容器以 root 启动，这是 isolate 的要求；用户代码依然降权运行。
 - 判题并发为 1（solo pool），提高并发前需重新评估整机资源与计时稳定性。
-- 服务器侧补丁属于过渡方案，上游修复后应移除。
+- 服务器侧补丁属于过渡方案，上游修复后应移除（consumer 补丁已可移除，见第 5 节）。

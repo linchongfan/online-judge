@@ -25,6 +25,10 @@ interface SessionState {
   loggedIn: boolean
   initializing: boolean
   initialized: boolean
+  // True when initialization hit a transient failure (network/5xx): the user
+  // is NOT a confirmed guest, so the router must not bounce protected pages
+  // to the login screen; the next navigation retries initialization.
+  degraded: boolean
   profile: UserProfile | null
   role: UserRole | null
 }
@@ -33,6 +37,7 @@ export const session = reactive<SessionState>({
   loggedIn: false,
   initializing: true,
   initialized: false,
+  degraded: false,
   profile: null,
   role: null,
 })
@@ -43,6 +48,7 @@ function applyProfile(profile: UserProfile): UserProfile {
   session.loggedIn = true
   session.initialized = true
   session.initializing = false
+  session.degraded = false
   return profile
 }
 
@@ -52,6 +58,9 @@ function clearSession(): void {
   session.role = null
   session.loggedIn = false
   session.initializing = false
+  // A definitive logout/rejection is never "degraded": the router must treat
+  // this session as a confirmed guest again.
+  session.degraded = false
 }
 
 // A refresh credential rejected for good invalidates the in-memory session;
@@ -76,9 +85,11 @@ export function initializeSession(): Promise<UserProfile | null> {
         session.initialized = true
         return null
       }
-      // Transient failure (network, 5xx): stay uninitialized so the next
-      // navigation retries instead of permanently treating the user as guest.
+      // Transient failure (network, 5xx): stay uninitialized and mark the
+      // session degraded so the router holds the user on protected pages
+      // instead of treating them as a guest.
       session.initializing = false
+      session.degraded = true
       return null
     })
     .finally(() => {
@@ -97,8 +108,10 @@ export async function register(credentials: RegisterRequest): Promise<UserProfil
   return applyProfile(response.user)
 }
 
-export async function logout(): Promise<MessageResponse | null> {
+export async function logout(): Promise<MessageResponse> {
   try {
+    // Errors propagate so callers can distinguish "revoked server-side" from
+    // "cleared locally only"; the local session is cleared either way.
     return await logoutRequest()
   } finally {
     clearSession()

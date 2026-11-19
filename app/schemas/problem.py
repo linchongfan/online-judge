@@ -106,3 +106,10 @@ class TagResponse(ApiSchema):
     id: int
     name: str
     problem_count: int = 0
+
+
+class ProblemNeighborsResponse(ApiSchema):
+    prev: int | None = None
+    next: int | None = None
+    index: int = 0
+    total: int = 0

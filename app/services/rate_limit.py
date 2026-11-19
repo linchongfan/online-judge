@@ -6,6 +6,16 @@ import redis
 
 from app.core.config import get_settings
 
+# Atomic INCR + window establishment: a crash between INCR and EXPIRE can no
+# longer leave a permanent key without a TTL.
+_ALLOW_SCRIPT = """
+local current = redis.call('INCR', KEYS[1])
+if current == 1 then
+  redis.call('EXPIRE', KEYS[1], ARGV[1])
+end
+return current
+"""
+
 
 class RateLimiter:
     def __init__(self) -> None:
@@ -21,10 +31,8 @@ class RateLimiter:
     def allow(self, key: str, limit: int, window_seconds: int) -> bool:
         try:
             client = self._client()
-            current = client.incr(key)
-            if current == 1:
-                client.expire(key, window_seconds)
-            return int(current) <= limit
+            current = int(client.eval(_ALLOW_SCRIPT, 1, key, window_seconds))
+            return current <= limit
         except redis.RedisError:
             if get_settings().is_production:
                 return False

@@ -74,16 +74,17 @@ sudo git clone https://github.com/linchongfan/online-judge.git /opt/xinbaoyan-sr
 cd /opt/xinbaoyan-src
 
 # 2. 安装系统依赖、创建低权账号和目录、生成随机密钥、安装 Nginx。
-#    传入域名时会自动申请 Let's Encrypt 证书；传入纯 IP 时跳过证书，直接以 HTTP 提供服务。
+#    传入域名时会自动申请 Let's Encrypt 证书。裸 IP 会被拒绝：
+#    生产模式强制 Secure Cookie，必须有 HTTPS（使用域名或受控 TLS 终止）。
 #    第二个参数是前端 HTTP 端口，默认 80；被占用时可换成 9898 等。
-sudo bash deploy/linux/bootstrap.sh <地址> [HTTP端口]
+sudo bash deploy/linux/bootstrap.sh <域名> [HTTP端口]
 
 # 3. bootstrap 不回显密钥。设置 SMTP 和现有基础设施的真实凭据。
 sudoedit /etc/xinbaoyan/app.env
 sudoedit /etc/xinbaoyan/infra.env
 ```
 
-**纯 IP 模式说明**：Let's Encrypt 等受信任 CA 不为裸 IP 签发证书，因此 IP 模式使用 HTTP，`bootstrap.sh` 会自动把 `REFRESH_COOKIE_SECURE` 设为 `false` 并把 CORS 来源改为 `http://`，登录和会话在明文传输下可用，但**不适合生产长期使用**；有了域名后重新执行 `bootstrap.sh 域名` 即可切换到 HTTPS。默认 HTTP 端口为 80，被其他服务（如 1Panel OpenResty）占用时，可加第二个参数换端口，例如 `sudo bash deploy/linux/bootstrap.sh 1.2.3.4 9898`，之后通过 `http://IP:9898` 访问。
+**HTTPS 要求**：生产模式强制 `REFRESH_COOKIE_SECURE=true`（见 `app/core/config.py` 的配置校验），`bootstrap.sh`/`configure.sh` 会拒绝裸 IP 地址。内网或临时环境请通过受控 TLS 终止（反向代理）对外提供 HTTPS，而不是绕过该安全校验。
 
 图中 1Panel 已运行 MySQL `8.4.13` 和 Redis `8.10.3` 时，保持 `/etc/xinbaoyan/infra.env` 的 `INFRA_MODE=external`，不会再创建第二套容器。先在 1Panel 创建数据库 `xinbaoyan`、仅拥有该库权限的账号 `oj`，并确认 Redis 已设置密码。然后：
 
@@ -93,14 +94,21 @@ sudoedit /etc/xinbaoyan/infra.env
 
 外部模式会执行真实 `SELECT 1` 与 Redis `PING` 检查；备份使用本机 `mysqldump`，不依赖 1Panel 容器名称。
 
-发布完成并通过健康检查后，`deploy.sh` 会自动创建两个初始账号（幂等，已存在则跳过）：
+发布完成并通过健康检查后，默认**不会创建任何账号**。用交互式脚本创建第一个管理员：
 
-| 角色 | 账号 | 密码 |
-| --- | --- | --- |
-| 管理员 | `admin@123321` | `admin@123321` |
-| 测试用户 | `test@123456` | `test@123456` |
+```bash
+sudo /opt/xinbaoyan/current/.venv/bin/python scripts/create_admin.py <用户名> <邮箱>
+```
 
-用户名规则已支持 `@`。首次登录后请立即修改密码；禁用自动创建可用 `sudo CREATE_DEFAULT_USERS=0 bash deploy/linux/deploy.sh`，覆盖默认值可在部署前设置 `DEFAULT_ADMIN_USERNAME`、`DEFAULT_ADMIN_PASSWORD`、`DEFAULT_ADMIN_EMAIL`、`DEFAULT_TEST_*` 环境变量。
+如需自动化建号，显式提供全部凭据（脚本内无任何内置默认密码）：
+
+```bash
+sudo CREATE_DEFAULT_USERS=1 \
+  DEFAULT_ADMIN_USERNAME=... DEFAULT_ADMIN_PASSWORD=... DEFAULT_ADMIN_EMAIL=... \
+  bash deploy/linux/deploy.sh
+```
+
+测试用户仅在内网/演示环境显式设置 `CREATE_DEFAULT_TEST_USER=1` 及 `DEFAULT_TEST_*` 凭据时才创建。用户名规则已支持 `@`；首次登录后请立即修改密码。旧版本曾内置 `admin@123321` / `test@123456` 固定账号：仍在使用的实例必须立即删除或轮换这些账号并撤销其有效会话。
 
 ```bash
 # 构建、测试、连接现有基础设施、备份、迁移、发布并健康检查。

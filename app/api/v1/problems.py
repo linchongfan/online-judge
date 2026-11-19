@@ -5,12 +5,19 @@ from app.api.deps import CurrentUser, Db, OptionalUser
 from app.core.exceptions import AppError
 from app.models import Contest, ContestProblem, ContestPublication, Problem, Tag, UserRole, utcnow
 from app.schemas.common import Page, make_page
-from app.schemas.problem import ProblemDetail, ProblemListItem, SolutionResponse, TagResponse
+from app.schemas.problem import (
+    ProblemDetail,
+    ProblemListItem,
+    ProblemNeighborsResponse,
+    SolutionResponse,
+    TagResponse,
+)
 from app.schemas.submission import SampleRunCreate, SubmissionAccepted
 from app.services.contests import can_view_contest_problem, get_contest
 from app.services.problems import (
     get_problem,
     list_problems,
+    problem_neighbors,
     random_problem,
     serialize_detail,
     serialize_list_item,
@@ -43,6 +50,11 @@ def problems(
 @router.get("/random", response_model=ProblemDetail)
 def random(db: Db, user: OptionalUser):
     return serialize_detail(db, random_problem(db), user.id if user else None)
+
+
+@router.get("/{problem_id}/neighbors", response_model=ProblemNeighborsResponse)
+def neighbors(problem_id: int, db: Db):
+    return problem_neighbors(db, problem_id)
 
 
 @router.get("/{problem_id}", response_model=ProblemDetail)

@@ -176,6 +176,22 @@ def list_problems(
     return problems, total
 
 
+def problem_neighbors(db: Session, problem_id: int) -> dict:
+    """Position of a problem within the published practice list, by id order."""
+    ids = db.scalars(select(Problem.id).where(Problem.status == ProblemStatus.PUBLISHED).order_by(Problem.id)).all()
+    total = len(ids)
+    try:
+        position = ids.index(problem_id)
+    except ValueError:
+        position = -1
+    return {
+        "prev": ids[position - 1] if position > 0 else None,
+        "next": ids[position + 1] if 0 <= position < total - 1 else None,
+        "index": position + 1 if position >= 0 else 0,
+        "total": total,
+    }
+
+
 def random_problem(db: Session) -> Problem:
     ids = db.scalars(select(Problem.id).where(Problem.status == ProblemStatus.PUBLISHED)).all()
     if not ids:

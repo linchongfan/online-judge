@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 import tempfile
 from pathlib import Path
 
@@ -12,6 +13,19 @@ from .languages import LanguageAdapter, get_language_adapter
 from .process import ProcessLimits, ProcessResult, ProcessRunner
 from .protocol import CaseResult, JudgeRequest, JudgeResult, JudgeStatus, TestCase
 from .sandbox import LocalSubprocessBackend, SandboxBackend, SandboxConfigurationError
+
+# Scratch directories for individual test cases. Kept out of the compilation
+# directory so a case program can never observe leftovers from a previous
+# case, and vice versa.
+_CASE_DIR_PREFIX = "case-"
+
+
+def _case_sort_key(case: TestCase) -> tuple[int, int | str]:
+    """Deterministic execution order regardless of caller/DB ordering."""
+    try:
+        return (0, int(case.case_id))
+    except ValueError:
+        return (1, case.case_id)
 
 
 class JudgeWorker:
@@ -80,8 +94,12 @@ class JudgeWorker:
                     diagnostic=compile_failure[1],
                 )
 
+        # Execute cases in a deterministic order: the first failing case feeds
+        # the combined diagnostic, so ordering must not depend on caller or
+        # database row order. (Ordering is for determinism only — it is never
+        # treated as a confidentiality boundary.)
         case_results: list[CaseResult] = []
-        for case in request.cases:
+        for case in sorted(request.cases, key=_case_sort_key):
             result = self._run_case(
                 request,
                 adapter,
@@ -113,20 +131,40 @@ class JudgeWorker:
         case: TestCase,
         sensitive_values: tuple[str, ...],
     ) -> CaseResult:
-        execution = self.runner.run(
-            adapter.run_command(work_dir),
-            cwd=work_dir,
-            env=environment,
-            stdin_data=case.input_data.encode("utf-8"),
-            limits=ProcessLimits(
-                wall_timeout_ms=request.time_limit_ms,
-                output_limit_bytes=request.output_limit_bytes,
-                memory_limit_kb=request.memory_limit_kb,
-            ),
-        )
+        # Every case runs in a fresh scratch directory holding copies of the
+        # compiled artifacts, so a program can neither read leftovers from a
+        # previous case nor poison artifacts used by a later case. Temporary
+        # environment variables point at the scratch directory as well: the
+        # previous shared work directory was a channel for smuggling hidden
+        # input from a hidden case into a later sample case.
+        case_dir = Path(tempfile.mkdtemp(prefix=f"{_CASE_DIR_PREFIX}{case.case_id}-", dir=work_dir))
+        try:
+            self._stage_case_artifacts(work_dir, case_dir)
+            case_env = {
+                **environment,
+                "TMP": str(case_dir),
+                "TEMP": str(case_dir),
+                "TMPDIR": str(case_dir),
+                "HOME": str(case_dir),
+            }
+            execution = self.runner.run(
+                adapter.run_command(case_dir),
+                cwd=case_dir,
+                env=case_env,
+                stdin_data=case.input_data.encode("utf-8"),
+                limits=ProcessLimits(
+                    wall_timeout_ms=request.time_limit_ms,
+                    output_limit_bytes=request.output_limit_bytes,
+                    memory_limit_kb=request.memory_limit_kb,
+                ),
+            )
+        finally:
+            shutil.rmtree(case_dir, ignore_errors=True)
         # Runtime stderr may echo anything the program read, including hidden
-        # test input. Only public samples may return the sanitized diagnostic.
-        allow_runtime_diagnostic = case.is_sample
+        # test input. Only an interactive sample run may return the sanitized
+        # diagnostic; official submissions never do — not even for cases that
+        # are themselves public samples.
+        allow_runtime_diagnostic = request.is_sample_run and case.is_sample
         diagnostic = (
             sanitize_diagnostic(execution.stderr, sensitive_values=sensitive_values)
             if allow_runtime_diagnostic
@@ -168,6 +206,21 @@ class JudgeWorker:
             memory_kb=execution.memory_kb,
             diagnostic=diagnostic,
         )
+
+    @staticmethod
+    def _stage_case_artifacts(work_dir: Path, case_dir: Path) -> None:
+        """Copy compiled artifacts into the fresh case directory.
+
+        Copies (not symlinks): a case program that modifies an artifact would
+        otherwise corrupt the shared copy used by later cases. Directories
+        (caches, other case scratch dirs) are skipped — each case only needs
+        the top-level artifacts produced by compilation.
+        """
+        for item in work_dir.iterdir():
+            # Sandbox stdio staging files from the compile phase are internal
+            # plumbing, not case artifacts.
+            if item.is_file() and not item.name.startswith(".judge-sandbox-"):
+                shutil.copy2(item, case_dir / item.name)
 
     @staticmethod
     def _compile_failure(

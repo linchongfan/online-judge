@@ -113,15 +113,29 @@ class JudgeConfig:
             toolchain=ToolchainConfig.from_env(source),
             sandbox=SandboxPolicy(mode=mode, allow_unsafe_tests=allow_unsafe_tests),
             work_root=work_root,
-            sandbox_backend=cls._select_sandbox_backend(source, work_root),
+            sandbox_backend=cls._select_sandbox_backend(source, work_root, mode),
         )
 
     @staticmethod
-    def _select_sandbox_backend(source: Mapping[str, str], work_root: Path | None) -> SandboxBackend | None:
+    def _select_sandbox_backend(
+        source: Mapping[str, str],
+        work_root: Path | None,
+        mode: SandboxMode,
+    ) -> SandboxBackend | None:
         name = source.get(SANDBOX_BACKEND_ENV, "local").strip().lower()
         if name == "local":
             return None
         if name == "windows":
+            if mode is SandboxMode.PRODUCTION:
+                # The Windows backend does not yet enforce a verified
+                # filesystem/network boundary (no AppContainer, no restricted
+                # SIDs, no per-service firewall rules). Fail closed instead of
+                # letting production policy trust its capability claims.
+                raise ToolchainConfigurationError(
+                    "The Windows sandbox backend is not approved for production: "
+                    "it lacks a verified filesystem and network boundary. "
+                    "Run the judge worker on Linux with JUDGE_SANDBOX_BACKEND=isolate."
+                )
             from .windows_sandbox import WindowsSandboxBackend
 
             return WindowsSandboxBackend(work_root=work_root)

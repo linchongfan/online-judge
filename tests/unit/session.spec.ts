@@ -7,7 +7,14 @@ import { ApiError } from '../../src/api/client'
 import { initializeSession, session } from '../../src/stores/session'
 
 function resetSession() {
-  Object.assign(session, { loggedIn: false, initializing: false, initialized: false, profile: null, role: null })
+  Object.assign(session, {
+    loggedIn: false,
+    initializing: false,
+    initialized: false,
+    degraded: false,
+    profile: null,
+    role: null,
+  })
   mocks.getProfile.mockReset()
 }
 
@@ -20,18 +27,21 @@ describe('session initialization', () => {
     expect(profile?.username).toBe('u')
     expect(session.loggedIn).toBe(true)
     expect(session.initialized).toBe(true)
+    expect(session.degraded).toBe(false)
   })
 
-  it('stays uninitialized on transient network errors so the next navigation retries', async () => {
+  it('marks the session degraded on transient failures so the router does not treat the user as a guest', async () => {
     mocks.getProfile.mockRejectedValue(new ApiError('NETWORK_ERROR', 'offline', 0))
     const profile = await initializeSession()
     expect(profile).toBeNull()
     expect(session.loggedIn).toBe(false)
     expect(session.initialized).toBe(false)
+    expect(session.degraded).toBe(true)
 
     mocks.getProfile.mockResolvedValue({ username: 'u', role: 'user' })
     await initializeSession()
     expect(session.loggedIn).toBe(true)
+    expect(session.degraded).toBe(false)
     expect(mocks.getProfile).toHaveBeenCalledTimes(2)
   })
 
@@ -40,5 +50,6 @@ describe('session initialization', () => {
     await initializeSession()
     expect(session.loggedIn).toBe(false)
     expect(session.initialized).toBe(true)
+    expect(session.degraded).toBe(false)
   })
 })

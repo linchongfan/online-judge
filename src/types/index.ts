@@ -92,6 +92,13 @@ export interface ProblemListItem {
   progress: ProblemProgress
 }
 
+export interface ProblemNeighbors {
+  prev: number | null
+  next: number | null
+  index: number
+  total: number
+}
+
 export interface ProblemDetail extends ProblemListItem {
   description: string[]
   inputDescription: string

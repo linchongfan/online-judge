@@ -58,6 +58,10 @@ def _handle_message(client: redis.Redis, raw: bytes) -> None:
         _dead_letter(client, raw, "invalid JSON")
         _ack(client, raw)
         return
+    if not isinstance(message, dict):
+        _dead_letter(client, raw, "invalid envelope: expected a JSON object")
+        _ack(client, raw)
+        return
     payload = message.get("payload")
     signature = message.get("signature", "")
     if not isinstance(payload, dict) or not verify_result_signature(payload, signature):
@@ -94,6 +98,22 @@ def _handle_message(client: redis.Redis, raw: bytes) -> None:
         _ack(client, raw)
 
 
+def _to_bytes(item: Any) -> bytes:
+    # redis-py returns bytes here (BRPOPLPUSH answer); with decode_responses
+    # enabled it would be str. The answer is a single value either way.
+    return item if isinstance(item, bytes) else str(item).encode("utf-8")
+
+
+def _consume_once(client: redis.Redis, block_ms: int = 5000) -> bool:
+    """Pop one message onto the processing list and handle it. Returns False on timeout."""
+    item = client.brpoplpush(QUEUE, PROCESSING_QUEUE, timeout=max(1, block_ms // 1000))
+    if item is None:
+        return False
+    raw = _to_bytes(cast(Any, item))
+    _handle_message(client, raw)
+    return True
+
+
 def consume_results(block_ms: int = 5000) -> None:
     client = _client()
     recovered = _recover_stale_processing(client)
@@ -102,10 +122,7 @@ def consume_results(block_ms: int = 5000) -> None:
     logger.info("Judge result consumer started")
     while True:
         try:
-            item = cast(Any, client.brpoplpush(QUEUE, PROCESSING_QUEUE, timeout=max(1, block_ms // 1000)))
-            if item is None:
-                continue
-            _handle_message(client, item[1])
+            _consume_once(client, block_ms)
         except redis.RedisError:
             logger.exception("Result consumer transport error; reconnecting")
             time.sleep(2)

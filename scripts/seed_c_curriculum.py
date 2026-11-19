@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -31,6 +32,7 @@ from app.models import (
     TestDataStatus,
     TestDataVersion,
     User,
+    UserRole,
 )
 from app.services.test_data import TestDataService
 from scripts.seed import zip_data
@@ -134,9 +136,20 @@ def main() -> None:
     items = json.loads(path.read_text(encoding="utf-8"))
     db = SessionLocal()
     try:
-        admin = db.scalar(select(User).where(User.username == "admin@123321"))
+        # Prefer an explicit operator account; fall back to any active admin.
+        # There is intentionally no built-in default account to rely on.
+        username = os.environ.get("CURRICULUM_OWNER", "").strip()
+        query = (
+            select(User).where(User.username == username)
+            if username
+            else select(User).where(User.role == UserRole.ADMIN)
+        )
+        admin = db.scalar(query)
         if admin is None:
-            raise SystemExit("admin@123321 not found")
+            raise SystemExit(
+                "No admin account found. Create one with scripts/create_admin.py, "
+                "or set CURRICULUM_OWNER to an existing username."
+            )
         for item in items:
             print(import_problem(db, admin, item))
     except Exception:

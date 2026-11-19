@@ -337,18 +337,22 @@ async function contestAction(contest: AdminContest, action: 'publish' | 'cancel'
   }
 }
 
+let participantsGeneration = 0
 async function openParticipants(contest: AdminContest) {
+  const generation = ++participantsGeneration
   participantContest.value = contest
   participants.value = []
   participantsError.value = ''
   participantsVisible.value = true
   participantsLoading.value = true
   try {
-    participants.value = await listAdminContestParticipants(contest.id)
+    const items = await listAdminContestParticipants(contest.id)
+    if (generation !== participantsGeneration) return
+    participants.value = items
   } catch (error) {
-    participantsError.value = adminErrorMessage(error, '参赛名单加载失败')
+    if (generation === participantsGeneration) participantsError.value = adminErrorMessage(error, '参赛名单加载失败')
   } finally {
-    participantsLoading.value = false
+    if (generation === participantsGeneration) participantsLoading.value = false
   }
 }
 async function recomputeResults(contest: AdminContest) {

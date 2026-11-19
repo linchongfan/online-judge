@@ -409,7 +409,9 @@ function chooseUpload() {
   uploadInput.value?.click()
 }
 
+let uploadGeneration = 0
 async function handleUpload(event: Event) {
+  const generation = ++uploadGeneration
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   input.value = ''
@@ -423,14 +425,16 @@ async function handleUpload(event: Event) {
   uploadErrors.value = []
   try {
     const result = await uploadAdminTestData(problemId, file)
+    if (generation !== uploadGeneration || editingId.value !== problemId) return
     ElMessage.success(`测试数据版本已上传并校验通过：${result.testCaseCount} 个测试点，${result.sampleCount} 个样例`)
     await Promise.all([loadVersions(problemId), loadProblems()])
   } catch (error) {
+    if (generation !== uploadGeneration || editingId.value !== problemId) return
     uploadErrors.value = readUploadErrors(error)
     ElMessage.error(adminErrorMessage(error, '测试数据上传失败'))
     await loadVersions(problemId)
   } finally {
-    uploading.value = false
+    if (generation === uploadGeneration) uploading.value = false
   }
 }
 

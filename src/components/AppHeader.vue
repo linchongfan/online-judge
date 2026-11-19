@@ -55,9 +55,11 @@ const active = computed(() => {
 })
 
 async function signOut() {
-  try { await logout() } catch { /* 本地会话始终清理 */ }
+  let serverRevoked = true
+  try { await logout() } catch { serverRevoked = false }
   await router.push('/problems')
-  ElMessage.success('已退出登录')
+  if (serverRevoked) ElMessage.success('已退出登录')
+  else ElMessage.warning('网络异常：已在本机退出，服务端会话可能仍有效')
 }
 </script>
 
