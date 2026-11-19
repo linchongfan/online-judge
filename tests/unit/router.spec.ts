@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({ getProfile: vi.fn() }))
 vi.mock('../../src/api/me', () => ({ getProfile: mocks.getProfile }))
 
 import { ApiError } from '../../src/api/client'
-import { initializeSession, session } from '../../src/stores/session'
+import { session } from '../../src/stores/session'
 import router from '../../src/router'
 
 function resetSession() {

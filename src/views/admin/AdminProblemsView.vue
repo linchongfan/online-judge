@@ -531,7 +531,7 @@ onUnmounted(() => {
         <div class="form-section test-data-section">
           <div class="solution-config-heading"><div><h3>测试数据版本</h3><p>ZIP 内按 sample / hidden 目录组织成对 .in 与 .out 文件。</p></div><el-button size="small" :loading="templateDownloading" @click="downloadTemplate"><el-icon><Download /></el-icon>下载模板</el-button></div>
           <template v-if="editingId !== null">
-            <input ref="uploadInput" class="visually-hidden" type="file" accept=".zip,application/zip" @change="handleUpload" />
+            <input ref="uploadInput" class="visually-hidden" type="file" accept=".zip,application/zip" aria-label="选择测试数据 ZIP" @change="handleUpload" />
             <div class="upload-actions"><el-button type="primary" plain :loading="uploading" :disabled="detailLoading || saving" @click="chooseUpload"><el-icon><Upload /></el-icon>{{ uploading ? '上传并校验中' : '选择 ZIP 并上传' }}</el-button><span>新有效版本会自动成为当前版本</span></div>
             <div v-if="uploadErrors.length" class="validation-errors" role="alert"><strong>服务端返回 {{ uploadErrors.length }} 条校验错误</strong><div v-for="(item, index) in uploadErrors" :key="`${item.code}-${item.path}-${index}`"><span class="mono">{{ item.path }}</span><p>{{ item.message }}</p><code>{{ item.code }}</code></div></div>
             <el-alert v-if="versionsError" :title="versionsError" type="error" :closable="false" show-icon role="alert"><el-button size="small" @click="editingId !== null && loadVersions(editingId)">重试版本列表</el-button></el-alert>

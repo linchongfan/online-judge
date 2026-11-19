@@ -16,10 +16,11 @@
 - 生产数据与队列：MySQL **8.4.13**、Redis **8.10.3**、Celery
 - 生产用户代码工具链基线：
   - C/C++：GCC/G++ 13（C99 / C++11 语言标准），界面显示为 `C` / `C++`
-  - Java：OpenJDK 17，`--release 8` 保持 Java 8 语言/API 目标，入口为 `public class Main`，界面显示为 `Java`
+  - Java：OpenJDK 17，`--release 8` 保持 Java 8 语言/API 目标（JDK 8 的 javac 不支持 `--release`），入口为 `public class Main`，界面显示为 `Java`
   - Python：独立 Python 3.12，界面显示为 `Python3`
 - 界面语言名称统一为 **C++ / C / Java / Python3**，与 `judge/languages.py` 的适配器一一对应。
-- 当前 Windows 开发机仍使用旧工具链；Linux 生产基线以上述版本为准，并在 CI 中做四语言判题结果比对。
+- 本地开发建议与生产基线一致（GCC 13 / OpenJDK 17 / Python 3.12）。四语言真实判题在
+  `.github/workflows/ci.yml` 的 `judge-vm` 作业中通过一次性判题机执行，不在普通 PR 流水线运行。
 
 ## 本地启动业务后端
 
@@ -62,7 +63,7 @@ python -m venv .venv
 
 - **Redis 8.10.3**：`tools/redis8/Redis-8.10.3-Windows-x64-msys2/redis-server.exe`（已启动在 6379 端口）
 - **Dev-C++ 5.11（TDM-GCC 4.9.2）**：`C:\Program Files (x86)\Dev-Cpp\MinGW64\bin`
-- **JDK 1.8（Amazon Corretto 8）**：`C:\Program Files\Amazon Corretto\jdk1.8.0_512\bin`
+- **OpenJDK 17**：例如 `C:\Program Files\Eclipse Adoptium\jdk-17\bin`（判题编译使用 `--release 8`，JDK 8 的 javac 不支持该参数）
 - **Python 3.8.6**：`C:\Python386\python.exe`
 
 启动判题链路的三个进程（均已通过 `.env` 自动加载环境变量）：
@@ -249,12 +250,21 @@ Linux 生产配置在 `/etc/xinbaoyan/`，持久化数据在 `/var/lib/xinbaoyan
 ## 测试与检查
 
 ```bash
-.venv/Scripts/python.exe -m pytest        # 113 passed, 14 skipped（Linux 专属用例在 Windows 跳过）
-.venv/Scripts/python.exe -m ruff check app judge tests
-.venv/Scripts/python.exe -m mypy app judge
-bun run test                              # 11 passed
+.venv/Scripts/python.exe -m pytest        # 199 passed, 19 skipped（Linux 专属用例在 Windows 跳过）
+.venv/Scripts/python.exe -m ruff check app judge tests scripts
+.venv/Scripts/python.exe -m mypy app judge scripts
+bun run lint                              # ESLint + Vue 可访问性规则
+bun run typecheck
+bun run test                              # 29 passed
 bun run build
+bun run budget                            # 初始包与单 chunk 体积上限
 ```
+
+`bun run verify` 串起前端全部检查。CI（`.github/workflows/ci.yml`）包含：
+后端 lint/类型/测试（Redis 服务）、MySQL 迁移与集成测试、前端 lint/typecheck/测试/构建/体积预算，
+以及仅在 `workflow_dispatch` 触发、运行在一次性 Linux 判题机上的 `judge-vm` 验收。
+测试默认使用 Redis 逻辑库 15（`tests/redis_testing.py`），显式 `TEST_REDIS_URL` 可覆盖；
+夹具拒绝操作应用自己的 db 0。
 
 API 测试覆盖认证、角色权限、Refresh Token 轮换、题目发布、ZIP 安全校验、隐藏数据边界、提交幂等、竞赛时间/报名约束、ACM 罚时、结果回调去重、默认账号幂等创建，以及判题后端的 TLE/MLE 元数据映射。Linux 判题侧另有 `tests/test_linux_isolate.py`（参数与元数据映射）和 `tests/test_linux_judge_vm.py`（需在判题机执行 `JUDGE_VM=1 pytest -m linux_judge_vm`）。
 
