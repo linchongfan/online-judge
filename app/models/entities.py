@@ -439,6 +439,13 @@ class OutboxMessage(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     dispatched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_error: Mapped[str | None] = mapped_column(String(500))
+    # Stable delivery id for this task attempt: assigned on the first dispatch
+    # and never regenerated, so duplicate deliveries produce identical signed
+    # results that the consumer can deduplicate.
+    nonce: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # Earliest time a transiently-failed message may be dispatched again
+    # (exponential backoff). NULL means "as soon as possible".
+    next_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class ContestProblemResult(Base):

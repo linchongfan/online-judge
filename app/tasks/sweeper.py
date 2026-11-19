@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.core.config import get_settings
 from app.db import SessionLocal
@@ -8,12 +8,21 @@ from app.models import (
     Contest,
     JudgeStatus,
     JudgeTask,
+    JudgeWorker,
     OutboxMessage,
     OutboxStatus,
     Submission,
+    WorkerStatus,
     utcnow,
 )
 from app.services.contests import recompute_contest_results
+from app.services.queue_capacity import queue_capacity
+
+# A heartbeat younger than this means the queue is actively being consumed;
+# healthy workers must not have their queued tasks re-enqueued just because
+# the backlog is large.
+FRESH_WORKER_SECONDS = 120
+HEALTHY_QUEUE_TIMEOUT_MULTIPLIER = 3
 
 
 def _expire_and_retry(db, task: JudgeTask, settings, error: str) -> tuple[bool, bool]:
@@ -34,11 +43,24 @@ def _expire_and_retry(db, task: JudgeTask, settings, error: str) -> tuple[bool, 
     submission.status = JudgeStatus.SE
     submission.diagnostic = "判题服务暂时异常，请稍后重试"
     submission.finished_at = utcnow()
+    queue_capacity.release(submission.id)
     if submission.contest_id:
         contest = db.get(Contest, submission.contest_id)
         if contest:
             recompute_contest_results(db, contest)
     return False, True
+
+
+def _fresh_workers(db, now) -> int:
+    return (
+        db.scalar(
+            select(func.count(JudgeWorker.id)).where(
+                JudgeWorker.status == WorkerStatus.ONLINE,
+                JudgeWorker.heartbeat_at > now - timedelta(seconds=FRESH_WORKER_SECONDS),
+            )
+        )
+        or 0
+    )
 
 
 def sweep_expired_tasks(limit: int = 100) -> dict[str, int]:
@@ -49,9 +71,13 @@ def sweep_expired_tasks(limit: int = 100) -> dict[str, int]:
     failed = 0
     try:
         now = utcnow()
+        fresh = _fresh_workers(db, now)
+        effective_queue_timeout = settings.judge_task_queue_timeout_seconds * (
+            HEALTHY_QUEUE_TIMEOUT_MULTIPLIER if fresh else 1
+        )
         # Case A: dispatched but the worker never reported a start — the
         # message was lost in the broker queue.
-        queue_deadline = now - timedelta(seconds=settings.judge_task_queue_timeout_seconds)
+        queue_deadline = now - timedelta(seconds=effective_queue_timeout)
         queued_tasks = db.scalars(
             select(JudgeTask)
             .join(OutboxMessage, OutboxMessage.task_id == JudgeTask.id)
@@ -62,6 +88,7 @@ def sweep_expired_tasks(limit: int = 100) -> dict[str, int]:
             )
             .order_by(OutboxMessage.dispatched_at)
             .limit(limit)
+            .with_for_update()
         ).all()
         for task in queued_tasks:
             ok, bad = _expire_and_retry(db, task, settings, "Judge task lost in queue")
@@ -86,6 +113,7 @@ def sweep_expired_tasks(limit: int = 100) -> dict[str, int]:
                 .where(JudgeTask.status == JudgeStatus.JUDGING, JudgeTask.lease_expires_at < now)
                 .order_by(JudgeTask.lease_expires_at)
                 .limit(remaining)
+                .with_for_update()
             ).all()
             for task in judging_tasks:
                 ok, bad = _expire_and_retry(db, task, settings, "Judge lease expired")

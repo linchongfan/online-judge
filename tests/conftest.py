@@ -40,7 +40,11 @@ def client(db_session: Session, tmp_path, monkeypatch) -> Generator[TestClient, 
         import redis as _redis
 
         client_redis = _redis.Redis.from_url(get_settings().redis_url, socket_connect_timeout=1, socket_timeout=1)
-        for pattern in ("login:*", "forgot:*", "submission:*", "password-reset:*", "reset-email:*"):
+        patterns = (
+            "login:*", "forgot:*", "submission:*", "password-reset:*", "reset-email:*",
+            "judge:slots:*", "judge:slot:sub:*",
+        )
+        for pattern in patterns:
             for key in client_redis.keys(pattern):
                 client_redis.delete(key)
     except Exception:

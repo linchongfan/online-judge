@@ -12,7 +12,7 @@ from datetime import timedelta
 from hashlib import sha256
 
 from pydantic import ValidationError
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 
 from app.core.exceptions import AppError
 from app.core.signing import canonical_payload
@@ -27,6 +27,7 @@ from app.models import (
 )
 from app.schemas.submission import JudgeResultMessage, JudgeStartedMessage
 from app.services.contests import recompute_contest_results
+from app.services.queue_capacity import queue_capacity
 
 SUPERSEDED_ERROR = "Superseded by a newer judge attempt"
 
@@ -38,7 +39,7 @@ def process_judge_started(data: dict) -> bool:
         raise AppError(400, "INVALID_JUDGE_EVENT", "判题事件格式无效") from exc
     db = SessionLocal()
     try:
-        task = db.get(JudgeTask, message.task_id)
+        task = db.get(JudgeTask, message.task_id, with_for_update=True)
         submission = db.get(Submission, message.submission_id) if task else None
         if (
             task is None
@@ -85,7 +86,7 @@ def process_judge_result(data: dict) -> bool:
         raise AppError(400, "INVALID_JUDGE_STATUS", "结果消费者只接受终态结果")
     db = SessionLocal()
     try:
-        task = db.get(JudgeTask, message.task_id)
+        task = db.get(JudgeTask, message.task_id, with_for_update=True)
         submission = db.get(Submission, message.submission_id) if task else None
         if (
             task is None
@@ -108,27 +109,59 @@ def process_judge_result(data: dict) -> bool:
             if task.status is JudgeStatus.SE and task.last_error == SUPERSEDED_ERROR:
                 return False
             if task.result_hash == result_hash:
+                # Duplicate delivery of an already-recorded outcome
+                # (at-least-once): identical payload, nothing to do.
                 return False
             raise AppError(409, "CONFLICTING_JUDGE_RESULT", "同一任务不能上报不同终态")
         if task.status not in (JudgeStatus.PENDING, JudgeStatus.JUDGING):
             raise AppError(409, "INVALID_STATE_TRANSITION", "判题任务状态流转无效")
         now = utcnow()
-        task.status = message.status
-        task.runtime_ms = message.runtime_ms
-        task.memory_kb = message.memory_kb
-        task.diagnostic = message.diagnostic[:1000] if message.diagnostic else None
-        task.result_hash = result_hash
-        task.finished_at = now
-        submission.status = message.status
-        submission.runtime_ms = message.runtime_ms
-        submission.memory_kb = message.memory_kb
-        submission.diagnostic = message.diagnostic[:1000] if message.diagnostic else None
-        submission.started_at = submission.started_at or task.started_at or now
-        submission.finished_at = now
-        if submission.contest_id and not submission.is_sample_run:
-            contest = db.get(Contest, submission.contest_id)
-            if contest:
-                recompute_contest_results(db, contest)
+        # Conditional transition: if the sweeper has already created a newer
+        # attempt or terminated this task, the rowcount is zero and this stale
+        # result must not overwrite the newer state.
+        transitioned = db.execute(
+            update(JudgeTask)
+            .where(
+                JudgeTask.id == task.id,
+                JudgeTask.status.in_([JudgeStatus.PENDING, JudgeStatus.JUDGING]),
+                JudgeTask.attempt == task.attempt,
+            )
+            .values(
+                status=message.status,
+                runtime_ms=message.runtime_ms,
+                memory_kb=message.memory_kb,
+                diagnostic=message.diagnostic[:1000] if message.diagnostic else None,
+                result_hash=result_hash,
+                finished_at=now,
+            )
+        ).rowcount  # type: ignore[attr-defined]
+        if not transitioned:
+            db.rollback()
+            return False
+        # The submission write is conditional too: a concurrent retry attempt
+        # may already have reset it to PENDING, in which case the newer
+        # attempt owns the submission state.
+        submission_updated = db.execute(
+            update(Submission)
+            .where(
+                Submission.id == submission.id,
+                Submission.status.in_([JudgeStatus.PENDING, JudgeStatus.JUDGING]),
+            )
+            .values(
+                status=message.status,
+                runtime_ms=message.runtime_ms,
+                memory_kb=message.memory_kb,
+                diagnostic=message.diagnostic[:1000] if message.diagnostic else None,
+                started_at=func.coalesce(Submission.started_at, task.started_at or now),
+                finished_at=now,
+            )
+        ).rowcount  # type: ignore[attr-defined]
+        if submission_updated:
+            queue_capacity.release(submission.id)
+            if submission.contest_id and not submission.is_sample_run:
+                contest = db.get(Contest, submission.contest_id)
+                if contest:
+                    recompute_contest_results(db, contest)
         db.commit()
         return True
     except Exception:
