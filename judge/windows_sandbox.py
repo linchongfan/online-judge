@@ -210,7 +210,7 @@ def _advapi32() -> Any:
     """Return advapi32 with prototypes configured; cached and mockable."""
     global _ADVAPI32
     if _ADVAPI32 is None:
-        lib = ctypes.WinDLL("advapi32", use_last_error=True)
+        lib = _win_dll("advapi32", use_last_error=True)
         lib.OpenProcessToken.restype = wintypes.BOOL
         lib.OpenProcessToken.argtypes = [wintypes.HANDLE, wintypes.DWORD, ctypes.POINTER(wintypes.HANDLE)]
         lib.GetTokenInformation.restype = wintypes.BOOL
@@ -286,7 +286,7 @@ def _kernel32() -> Any:
     """Return kernel32 with prototypes configured; cached and mockable."""
     global _KERNEL32
     if _KERNEL32 is None:
-        lib = ctypes.WinDLL("kernel32", use_last_error=True)
+        lib = _win_dll("kernel32", use_last_error=True)
         lib.GetCurrentProcess.restype = wintypes.HANDLE
         lib.GetCurrentProcess.argtypes = []
         lib.CloseHandle.restype = wintypes.BOOL
@@ -322,8 +322,15 @@ def _kernel32() -> Any:
     return _KERNEL32
 
 
+def _win_dll(name: str, *, use_last_error: bool = False) -> Any:
+    # ctypes.WinDLL only exists on Windows. The module is imported for type
+    # checking and unit tests on other platforms, but this helper is only ever
+    # executed on Windows.
+    return getattr(ctypes, "WinDLL")(name, use_last_error=use_last_error)  # noqa: B009
+
+
 def _last_error(api_name: str) -> str:
-    return f"{api_name} failed with Win32 error {ctypes.get_last_error()}."
+    return f"{api_name} failed with Win32 error {getattr(ctypes, 'get_last_error')()}."  # noqa: B009
 
 
 def _set_out_pointer(out: Any, value: int) -> None:
@@ -686,7 +693,7 @@ class WindowsSandboxBackend(SandboxBackend):
     def _inheritable_handle(stream: BinaryIO) -> int:
         import msvcrt
 
-        handle = msvcrt.get_osfhandle(stream.fileno())
+        handle = getattr(msvcrt, "get_osfhandle")(stream.fileno())  # noqa: B009
         if not _kernel32().SetHandleInformation(handle, _HANDLE_FLAG_INHERIT, _HANDLE_FLAG_INHERIT):
             raise SandboxConfigurationError(_last_error("SetHandleInformation"))
         return int(handle)

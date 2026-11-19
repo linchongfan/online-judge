@@ -31,6 +31,7 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 LOGS_DIR = PROJECT_ROOT / "logs"
@@ -50,12 +51,15 @@ _PROCESS_TERMINATE = 0x0001
 _STILL_ACTIVE = 259
 
 _is_windows = sys.platform == "win32"
-_kernel32: ctypes.WinDLL | None = None
-_psapi: ctypes.WinDLL | None = None
+# ctypes.WinDLL is Windows-only; resolve it dynamically so the module still
+# type-checks and imports on non-Windows platforms.
+_WinDLL: Any = getattr(ctypes, "WinDLL", None)  # noqa: B009
+_kernel32: Any = None
+_psapi: Any = None
 
 if _is_windows:
-    _kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
-    _psapi = ctypes.WinDLL("psapi", use_last_error=True)
+    _kernel32 = _WinDLL("kernel32", use_last_error=True)
+    _psapi = _WinDLL("psapi", use_last_error=True)
     _kernel32.OpenProcess.restype = ctypes.wintypes.HANDLE
     _kernel32.OpenProcess.argtypes = [ctypes.wintypes.DWORD, ctypes.wintypes.BOOL, ctypes.wintypes.DWORD]
     _kernel32.CloseHandle.argtypes = [ctypes.wintypes.HANDLE]
