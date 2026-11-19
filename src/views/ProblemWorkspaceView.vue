@@ -302,7 +302,7 @@ function changeLeftTab(tab: string) {
   nextTick(() => document.querySelector('.problem-pane .description-scroll')?.scrollTo({ top: 0 }))
 }
 function goToProblem(offset: number) {
-  let target: number | null = null
+  let target: number | null
   if (contest.value || plan.value) {
     if (!problemIds.value.length || problemIndex.value < 0) return
     target = problemIds.value[(problemIndex.value + offset + problemIds.value.length) % problemIds.value.length]
@@ -381,7 +381,7 @@ async function loadWorkspace() {
           contestData = null
           contestNotice = '竞赛不存在或已取消，已按练习模式打开'
         } else {
-          throw new Error('CONTEST_CONTEXT_UNAVAILABLE')
+          throw new Error('CONTEST_CONTEXT_UNAVAILABLE', { cause: error })
         }
       }
       if (contestData && contestData.status !== 'ongoing') {
@@ -532,6 +532,7 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
+      <!-- eslint-disable-next-line vuejs-accessibility/no-static-element-interactions -- focusable splitter with keyboard support -->
       <div class="pane-resizer" role="separator" aria-label="调整题面与编辑器宽度" aria-orientation="vertical" :aria-valuenow="Math.round(leftPaneWidth)" aria-valuemin="28" aria-valuemax="70" tabindex="0" title="拖动调整宽度，双击恢复默认" @pointerdown="startResize" @pointermove="resizePane" @pointerup="stopResize" @pointercancel="stopResize" @keydown.left.prevent="adjustPaneWidth(-2)" @keydown.right.prevent="adjustPaneWidth(2)" @dblclick="resetPaneWidth"><span /></div>
       <section ref="editorPane" class="editor-pane" :class="{ 'console-resizing': consoleResizing }">
         <div class="editor-toolbar">
@@ -542,6 +543,7 @@ onBeforeUnmount(() => {
           <div class="editor-actions"><span class="save-state"><el-icon><CircleCheck /></el-icon>{{ !storageReady ? '本地存储不可用' : saved ? '已保存到本机' : '正在保存…' }}</span><el-button text size="small" @click="resetCode"><el-icon><RefreshLeft /></el-icon>重置</el-button></div>
         </div>
         <div class="monaco-wrap"><CodeEditor v-model="code" :language="language" /></div>
+        <!-- eslint-disable-next-line vuejs-accessibility/no-static-element-interactions -- focusable splitter with keyboard support -->
         <div v-if="consoleOpen" class="console-resizer" role="separator" aria-label="调整编辑器与结果面板高度" aria-orientation="horizontal" :aria-valuenow="Math.round(consoleHeight)" :aria-valuemin="96" :aria-valuemax="Math.round(consoleMaxHeight())" tabindex="0" title="上下拖动调整高度，双击恢复默认" @pointerdown="startConsoleResize" @pointermove="resizeConsole" @pointerup="stopConsoleResize" @pointercancel="stopConsoleResize" @keydown.up.prevent="adjustConsoleHeight(20)" @keydown.down.prevent="adjustConsoleHeight(-20)" @dblclick="resetConsoleHeight"><span /></div>
         <div class="console-panel" ref="consolePanel" :class="{ collapsed: !consoleOpen }" :style="consoleOpen ? { height: `${consoleHeight}px` } : undefined">
           <div class="console-header">

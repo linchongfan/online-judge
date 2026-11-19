@@ -1,0 +1,169 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      e2e_base_url:
+        description: "Optional API base URL for the judge-VM end-to-end acceptance"
+        required: false
+        default: ""
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend lint / types / tests
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      TEST_REDIS_URL: redis://127.0.0.1:6379/15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Ruff
+        run: python -m ruff check app judge tests scripts
+      - name: Mypy
+        run: python -m mypy app judge scripts
+      - name: Pytest
+        run: python -m pytest
+
+  integration:
+    name: MySQL migrations / Redis integration
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: oj_ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 30
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      ALEMBIC_DATABASE_URL: mysql+pymysql://root:root@127.0.0.1:3306/oj_ci?charset=utf8mb4
+      TEST_REDIS_URL: redis://127.0.0.1:6379/15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Alembic upgrade on MySQL
+        run: python -m alembic upgrade head
+      - name: Verify migrated schema
+        run: |
+          python - <<'PY'
+          import os
+          from sqlalchemy import create_engine, inspect
+
+          engine = create_engine(os.environ["ALEMBIC_DATABASE_URL"])
+          inspector = inspect(engine)
+          outbox = {column["name"] for column in inspector.get_columns("outbox_message")}
+          assert {"nonce", "next_attempt_at"} <= outbox, outbox
+
+          long_text = {
+              ("submission", "source_code"),
+              ("solution_code", "code"),
+              ("study_plan", "description"),
+          }
+          for table, column in long_text:
+              types = {item["name"]: str(item["type"]).upper() for item in inspector.get_columns(table)}
+              assert "MEDIUMTEXT" in types[column], (table, column, types[column])
+          print("schema verified")
+          PY
+      - name: Integration-focused tests
+        run: >-
+          python -m pytest
+          tests/test_dispatcher_phase3.py
+          tests/test_queue_capacity.py
+          tests/test_verification_integration.py
+          tests/test_consumer_integration.py
+          tests/test_performance_phase5.py
+          tests/test_test_data_upload.py
+
+  frontend:
+    name: Frontend lint / types / tests / build / budget
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.2"
+      - name: Install
+        run: bun install --frozen-lockfile
+      - name: ESLint (Vue + accessibility)
+        run: bun run lint
+      - name: Typecheck
+        run: bun run typecheck
+      - name: Unit tests
+        run: bun run test
+      - name: Production build
+        run: bun run build
+      - name: Bundle budget
+        run: bun run budget
+
+  # Destructive sandbox tests run only on a disposable, self-hosted Linux judge
+  # VM. They are never part of PR feedback: trigger manually with
+  # `workflow_dispatch` and a runner labelled `judge-vm`.
+  judge-vm:
+    name: Linux judge VM acceptance
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: [self-hosted, linux, judge-vm]
+    env:
+      JUDGE_VM: "1"
+      JUDGE_ENV: production
+      JUDGE_SANDBOX_BACKEND: isolate
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Isolate metadata and sandbox tests
+        run: python -m pytest tests/test_isolate_meta.py tests/test_linux_isolate.py
+      - name: Disposable-VM integration suite
+        run: python -m pytest -m linux_judge_vm
+      - name: Four-language end-to-end acceptance
+        if: inputs.e2e_base_url != ''
+        env:
+          E2E_ACCOUNT: ${{ secrets.E2E_ACCOUNT }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+        run: >-
+          python scripts/e2e_judge_acceptance.py
+          --base-url "${{ inputs.e2e_base_url }}"
+          --account "$E2E_ACCOUNT"
+          --password "$E2E_PASSWORD"
+          --problem-id 1000

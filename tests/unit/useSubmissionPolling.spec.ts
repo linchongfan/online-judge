@@ -23,9 +23,9 @@ describe('useSubmissionPolling', () => {
     const onTerminal = vi.fn()
     const scope = effectScope()
     const id = ref('s-1')
-    const polling = scope.run(() =>
+    scope.run(() =>
       useSubmissionPolling(id, { fetcher, pollIntervalMs: 100, onTerminal }),
-    )!
+    )
     await vi.advanceTimersByTimeAsync(0)
     expect(fetcher).toHaveBeenCalledTimes(1)
     await vi.advanceTimersByTimeAsync(100)

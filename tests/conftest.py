@@ -11,7 +11,32 @@ from app.core.security import hash_password
 from app.db import Base, get_db
 from app.main import create_app
 from app.models import User, UserRole, UserStatus
+from app.services.queue_capacity import queue_capacity
 from app.services.rate_limit import rate_limiter
+from app.services.verification import verification_codes
+from tests.redis_testing import redis_db_index, resolve_test_redis_url
+
+
+@pytest.fixture(autouse=True)
+def _isolated_redis(monkeypatch, request) -> Generator[None, None, None]:
+    """Point every service at the test Redis database, never the app's db.
+
+    The services cache their client, so reset the cached connections after the
+    settings override; otherwise a client created earlier would keep writing to
+    the application database.
+    """
+    if "redis_url" in request.fixturenames:
+        yield
+        return
+    settings = get_settings()
+    url = resolve_test_redis_url()
+    if redis_db_index(url) == 0:
+        raise RuntimeError("Refusing to run tests against Redis db 0 (application data)")
+    monkeypatch.setattr(settings, "redis_url", url, raising=False)
+    rate_limiter._redis = None
+    verification_codes._redis = None
+    queue_capacity._redis = None
+    yield
 
 
 @pytest.fixture
@@ -39,7 +64,10 @@ def client(db_session: Session, tmp_path, monkeypatch) -> Generator[TestClient, 
     try:
         import redis as _redis
 
-        client_redis = _redis.Redis.from_url(get_settings().redis_url, socket_connect_timeout=1, socket_timeout=1)
+        test_redis_url = resolve_test_redis_url()
+        if redis_db_index(test_redis_url) == 0:
+            raise RuntimeError("Refusing to clean Redis db 0 (application data)")
+        client_redis = _redis.Redis.from_url(test_redis_url, socket_connect_timeout=1, socket_timeout=1)
         patterns = (
             "login:*", "forgot:*", "submission:*", "password-reset:*", "reset-email:*",
             "judge:slots:*", "judge:slot:sub:*",

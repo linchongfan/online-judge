@@ -1,5 +1,5 @@
 import type { TokenResponse } from '../types'
-import { clearAccessToken, getAccessToken, setAccessToken } from './token'
+import { getAccessToken, setAccessToken } from './token'
 
 export const API_BASE_URL = '/api/v1'
 const DEFAULT_TIMEOUT_MS = 15_000
@@ -15,12 +15,6 @@ export interface ApiRequestOptions extends Omit<RequestInit, 'body' | 'credentia
   timeoutMs?: number
   skipAuthRefresh?: boolean
   csrf?: boolean
-}
-
-interface ErrorPayload {
-  code: string
-  message: string
-  details?: unknown
 }
 
 export class ApiError extends Error {
@@ -170,23 +164,16 @@ async function performRefresh(): Promise<TokenResponse> {
   const csrf = getCsrfToken()
   if (csrf) headers.set('X-CSRF-Token', csrf)
 
-  try {
-    const response = await executeFetch({
-      url: buildUrl('/auth/refresh'),
-      init: { method: 'POST', headers, credentials: 'include' },
-      timeoutMs: DEFAULT_TIMEOUT_MS,
-    })
-    const payload = await parseResponse(response)
-    if (!response.ok) throw responseError(response, payload)
-    const tokenResponse = payload as TokenResponse
-    setAccessToken(tokenResponse.accessToken)
-    return tokenResponse
-  } catch (error) {
-    // Keep the access token on transient failures; request() only invokes the
-    // auth-failure handler (which clears the session) when the refresh
-    // credential itself is rejected with 401/403.
-    throw error
-  }
+  const response = await executeFetch({
+    url: buildUrl('/auth/refresh'),
+    init: { method: 'POST', headers, credentials: 'include' },
+    timeoutMs: DEFAULT_TIMEOUT_MS,
+  })
+  const payload = await parseResponse(response)
+  if (!response.ok) throw responseError(response, payload)
+  const tokenResponse = payload as TokenResponse
+  setAccessToken(tokenResponse.accessToken)
+  return tokenResponse
 }
 
 let refreshPromise: Promise<TokenResponse> | null = null
