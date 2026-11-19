@@ -81,10 +81,33 @@ bun run budget:                   110 chunks, total 5,599,251 bytes, entry index
 git diff --check:                 通过
 ```
 
+## 二之二、CI 实跑结果与跨平台修正
+
+首次推送（`44511235520`）暴露了一个本地 Windows 环境无法发现的问题：
+`judge/windows_sandbox.py` 与 `scripts/judge_watchdog.py` 使用
+`ctypes.WinDLL` / `ctypes.get_last_error` / `msvcrt.get_osfhandle`，
+在 Linux runner 的 mypy 下全部报 `attr-defined` / `name-defined`。
+
+修正（`fc28dc9`，合并提交 `c518323`）：
+
+- 新增 `_win_dll()` / 动态 `getattr` 解析 Windows-only ctypes API，
+  并用 `# noqa: B009` 说明其在非 Windows 上不存在、只会在 Windows 执行；
+- 看门狗中 `_kernel32/_psapi` 注解改为 `Any`，`WinDLL` 动态获取；
+- 本地补充 `mypy --platform linux app judge scripts` 验证（79 files，无错误）。
+
+第二次运行（`44513235702`）结果：
+
+```text
+✓ Backend lint / types / tests          1m1s
+✓ MySQL migrations / Redis integration  59s
+✓ Frontend lint / types / tests / build / budget  40s
+- Linux judge VM acceptance（workflow_dispatch 未触发，按设计跳过）
+```
+
 ## 三、未覆盖项与风险
 
-1. **CI 尚未在 GitHub 上实际运行过**：本阶段只做了本地等价检查与 YAML 解析；
-   首次推送后需观察 Actions 结果（尤其 MySQL 服务与 judge-vm 标签）。
+1. **judge-vm 作业尚未实际运行**：需要预先注册带 `judge-vm` 标签的自托管
+   一次性判题机，并手动触发 `workflow_dispatch`；普通 push 不会执行。
 2. `judge-vm` 需要预先注册带 `judge-vm` 标签的自托管判题机，否则该作业会一直排队。
 3. 浏览器 E2E、axe、OpenAPI 类型生成未实施（见 6.5）。
 4. 测试 Redis 默认落到 db 15，若某个环境已占用 db 15 需显式设置 `TEST_REDIS_URL`。
